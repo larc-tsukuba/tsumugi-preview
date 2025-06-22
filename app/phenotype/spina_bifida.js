@@ -35,8 +35,12 @@ const map_symbol_to_id = loadJSON("../../data/marker_symbol_accession_id.json");
 // ############################################################################
 
 let nodeSizes = elements.filter((ele) => ele.data.node_color !== undefined).map((ele) => ele.data.node_color);
-let nodeMin = Math.min(...nodeSizes);
-let nodeMax = Math.max(...nodeSizes);
+let nodeColorMin = Math.min(...nodeSizes);  // 色表示用の元の範囲
+let nodeColorMax = Math.max(...nodeSizes);  // 色表示用の元の範囲
+
+// フィルタリング用の範囲（元の値をコピー）
+let nodeMin = nodeColorMin;
+let nodeMax = nodeColorMax;
 
 
 
@@ -89,7 +93,8 @@ const cy = cytoscape({
                 width: 15,
                 height: 15,
                 "background-color": function (ele) {
-                    const color_value = scaleValue(ele.data("node_color"), nodeMin, nodeMax, 1, 10);
+                    const originalColor = ele.data("original_node_color") || ele.data("node_color");
+                    const color_value = scaleValue(originalColor, nodeColorMin, nodeColorMax, 1, 10);
                     return getColorForValue(color_value);
                 },
             },
@@ -125,6 +130,36 @@ const cy = cytoscape({
 
 // ★ デバッグ用：cyをグローバルに公開
 window.cy = cy;
+
+// ★ モバイル対応：Cytoscapeの表示問題を修正
+function handleMobileResize() {
+    if (cy) {
+        // モバイルでのレイアウト変更後にCytoscapeを再描画
+        setTimeout(() => {
+            cy.resize();
+            cy.fit();
+            cy.center();
+        }, 300);
+    }
+}
+
+// モバイルでの初期化完了後にCytoscapeを調整
+setTimeout(() => {
+    if (window.innerWidth <= 600) {
+        console.log("📱 Mobile device detected - applying mobile fixes");
+        cy.resize();
+        cy.fit();
+        cy.center();
+    }
+}, 500);
+
+// ウィンドウリサイズ時の対応
+window.addEventListener('resize', handleMobileResize);
+
+// オリエンテーション変更時の対応（モバイル）
+window.addEventListener('orientationchange', () => {
+    setTimeout(handleMobileResize, 500);
+});
 
 
 // ############################################################################
@@ -179,8 +214,8 @@ function filterByNodeColorAndEdgeSize() {
 
     // 1. node_color 範囲に基づきノードを表示/非表示
     cy.nodes().forEach((node) => {
-        const nodeColor = node.data("node_color");
-        const isVisible = nodeColor >= nodeMinValue && nodeColor <= nodeMaxValue;
+        const nodeColorForFilter = node.data("node_color_for_filter") || node.data("node_color");
+        const isVisible = nodeColorForFilter >= Math.min(nodeMinValue, nodeMaxValue) && nodeColorForFilter <= Math.max(nodeMinValue, nodeMaxValue);
         node.style("display", isVisible ? "element" : "none");
     });
 
@@ -194,8 +229,8 @@ function filterByNodeColorAndEdgeSize() {
         const isVisible =
             sourceVisible &&
             targetVisible &&
-            edgeSize >= edgeMinValue &&
-            edgeSize <= edgeMaxValue &&
+            edgeSize >= Math.min(edgeMinValue, edgeMaxValue) &&
+            edgeSize <= Math.max(edgeMinValue, edgeMaxValue) &&
             sharedPhenotypes.length >= 2; // 2つ以上の表現型を持つエッジのみ表示
 
         edge.style("display", isVisible ? "element" : "none");
