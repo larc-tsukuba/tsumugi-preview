@@ -1,12 +1,13 @@
-import { exportGraphAsPNG, exportGraphAsCSV } from "../js/exporter.js";
+import { exportGraphAsPNG, exportGraphAsCSV, exportGraphAsGraphML } from "../js/exporter.js";
 import { scaleToOriginalRange, scaleValue, getColorForValue } from "../js/value_scaler.js";
 import { removeTooltips, showTooltip } from "../js/tooltips.js";
 import { calculateConnectedComponents } from "../js/components.js";
 import { createSlider } from "../js/slider.js";
 import { filterElementsByGenotypeAndSex } from "../js/filters.js";
 import { loadJSONGz, loadJSON } from "../js/data_loader.js";
-import { setupGeneSearch } from "../js/searcher.js";
+import { setupGeneSearch } from "../js/gene_searcher.js";
 import { highlightDiseaseAnnotation } from "../js/highlighter.js";
+import { setupPhenotypeSearch } from "../js/phenotype_searcher.js";
 
 // ############################################################################
 // Input handler
@@ -170,6 +171,13 @@ const cy = cytoscape({
                 "font-weight": "bold",
             },
         },
+        {
+            selector: ".phenotype-highlight", // 表現型ハイライト用クラス
+            style: {
+                "border-width": 3,
+                "border-color": "#28a745",
+            },
+        },
     ],
     layout: getLayoutOptions(),
 });
@@ -269,7 +277,7 @@ function filterByNodeColorAndEdgeSize() {
     // 4. 標的遺伝子と直接接続されているノードのみを特定
     const targetGene = "Nol9";
     const targetNode = cy.getElementById(targetGene);
-    
+
     if (targetNode.length === 0) {
         return;
     }
@@ -279,13 +287,13 @@ function filterByNodeColorAndEdgeSize() {
 
     // 6. 標的遺伝子と直接接続されているノードを特定
     const directlyConnectedNodes = new Set([targetGene]);
-    
+
     // まず標的遺伝子と直接接続されているノードを特定
     cy.edges().forEach((edge) => {
         if (edge.style("display") === "element") {
             const source = edge.data("source");
             const target = edge.data("target");
-            
+
             // 標的遺伝子が関与するエッジから接続ノードを特定
             if (source === targetGene) {
                 directlyConnectedNodes.add(target);
@@ -300,7 +308,7 @@ function filterByNodeColorAndEdgeSize() {
         if (edge.style("display") === "element") {
             const source = edge.data("source");
             const target = edge.data("target");
-            
+
             // 両端のノードが直接接続されたノードセットに含まれている場合は表示
             if (directlyConnectedNodes.has(source) && directlyConnectedNodes.has(target)) {
                 edge.style("display", "element");
@@ -320,8 +328,14 @@ function filterByNodeColorAndEdgeSize() {
         }
     });
 
-    // 6. レイアウト再適用
+    // 9. レイアウト再適用
     cy.layout(getLayoutOptions()).run();
+
+
+    // 10. 表現型リストを更新（フィルター変更後に現在表示されている遺伝子の表現型のみを表示）
+    if (window.refreshPhenotypeList) {
+        window.refreshPhenotypeList();
+    }
 }
 
 
@@ -355,6 +369,11 @@ highlightDiseaseAnnotation({ cy });
 // --------------------------------------------------------
 
 setupGeneSearch({ cy });
+
+// =============================================================================
+// 表現型ハイライト（検索機能付き）
+// =============================================================================
+setupPhenotypeSearch({ cy, elements });
 
 // --------------------------------------------------------
 // Slider for Font size
@@ -440,4 +459,12 @@ document.getElementById("export-png").addEventListener("click", function () {
 
 document.getElementById("export-csv").addEventListener("click", function () {
     exportGraphAsCSV(cy, file_name);
+});
+
+// --------------------------------------------------------
+// GraphML Exporter (Desktop Cytoscape Compatible)
+// --------------------------------------------------------
+
+document.getElementById("export-graphml").addEventListener("click", function () {
+    exportGraphAsGraphML(cy, file_name);
 });

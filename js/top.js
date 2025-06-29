@@ -236,7 +236,7 @@ function jaroWinkler(s1, s2) {
 
     if (s1Len === 0 || s2Len === 0) return 0;
 
-    const matchWindow = Math.floor(Math.max(s1Len, s2Len) / 2) - 1;
+    const matchWindow = Math.max(0, Math.floor(Math.max(s1Len, s2Len) / 2) - 1);
     const s1Matches = new Array(s1Len).fill(false);
     const s2Matches = new Array(s2Len).fill(false);
     let matches = 0;
@@ -297,3 +297,37 @@ function wordMatchScore(term1, term2) {
 
     return score;
 }
+
+// ====================================================================
+// Info Tooltip Functionality
+// ====================================================================
+
+// Initialize tooltips when DOM is loaded
+document.addEventListener("DOMContentLoaded", function () {
+    // Handle tooltip click interactions for mobile devices
+    const tooltipIcons = document.querySelectorAll(".info-tooltip-icon");
+
+    tooltipIcons.forEach((icon) => {
+        icon.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const container = this.parentElement;
+            container.classList.toggle("active");
+
+            // Close other active tooltips
+            document.querySelectorAll(".info-tooltip-container.active").forEach((el) => {
+                if (el !== container) {
+                    el.classList.remove("active");
+                }
+            });
+        });
+    });
+
+    // Close tooltips when clicking outside
+    document.addEventListener("click", function () {
+        document.querySelectorAll(".info-tooltip-container.active").forEach((el) => {
+            el.classList.remove("active");
+        });
+    });
+});
