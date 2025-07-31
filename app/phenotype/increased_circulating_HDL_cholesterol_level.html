@@ -63,25 +63,30 @@
                 Phenotypic metrics
                 <div class="info-tooltip-container">
                     <div class="info-tooltip-icon">i</div>
-                    <div class="info-tooltip-content">Phenotype severity is not displayed when phenotype evaluation is binary (presence/absence).</div>
+                    <div class="info-tooltip-content">Phenotype severity is not displayed when phenotype evaluation is
+                        binary (presence/absence).</div>
                 </div>
             </div>
 
             <div class="slider-container">
-                <span class="control-label" style="display: block">
-                    Phenotypes similarity:
-                    <span id="edge-size-value"> 1 - 10 </span>
-                </span>
+                <div class="label-row">
+                    <span class="control-label">
+                        Phenotypes similarity:
+                        <span id="edge-size-value"> 1 - 10 </span>
+                    </span>
+                </div>
                 <div class="slider-element" id="filter-edge-slider"></div>
             </div>
 
             <!-- Slider for phenotypes severity -->
 
 <div class="slider-container">
-    <span class="control-label" style="display: block">
-        Phenotype severity:
-        <span id="node-color-value"> 1 -10 </span>
-    </span>
+    <div class="label-row">
+        <span class="control-label">
+            Phenotype severity:
+            <span id="node-color-value"> 1 -10 </span>
+        </span>
+    </div>
     <div class="slider-element" id="filter-node-slider"></div>
 </div>
 
@@ -204,39 +209,81 @@
         <div class="panel-section">
             <div class="panel-title">
                 <i class="fa-regular fa-lightbulb"></i>
-                Markup
+                Highlight
             </div>
             <div class="boxed-section align-center">
-                <span> Highlight
-                    <div class="info-tooltip-container">
-                        <div class="info-tooltip-icon">i</div>
-                        <div class="info-tooltip-content">Human Disease annotations use <a href="https://www.mousephenotype.org/help/data-visualization/gene-pages/disease-models/" target="_blank">IMPC Disease Models</a></div>
-                    </div>
-                </span>
+                <span> Markup </span>
+
+                <!-- Human disease -->
                 <form id="human-disease-filter-form">
                     <div class="round-checkbox">
                         <input type="checkbox" id="disease" value="Disease" />
                         <label for="disease">Human Disease</label>
+                        <div class="info-tooltip-container">
+                            <div class="info-tooltip-icon">i</div>
+                            <div class="info-tooltip-content">Human Disease annotations use <a
+                                    href="https://www.mousephenotype.org/help/data-visualization/gene-pages/disease-models/"
+                                    target="_blank">IMPC Disease Models</a>. Genes associated with human diseases are highlighted with a red border.</div>
+                        </div>
                     </div>
                 </form>
-                <div class="round-checkbox">
+
+                <!-- Phenotype search -->
+                <div class="search-container">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="phenotype-search" placeholder="Specific phenotypes" />
+                    <input type="text" id="phenotype-search" placeholder="Phenotypes" />
                     <ul id="phenotype-suggestions" class="suggestions" hidden></ul>
+                    <div class="info-tooltip-container">
+                        <div class="info-tooltip-icon">i</div>
+                        <div class="info-tooltip-content">
+                            Search for phenotypes to highlight. Genes with matching phenotypes are highlighted with a blue border.
+                        </div>
+                    </div>
                 </div>
-                <div id="selected-phenotypes" class="selected-phenotypes">
-                    <!-- Selected phenotypes will be displayed here -->
+                <div id="selected-phenotypes" class="selected-phenotypes"></div>
+
+                <!-- Gene search -->
+                <div class="search-container">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="gene-search" placeholder="Gene Symbol">
+                    <ul id="suggestions" class="suggestions" hidden></ul>
                 </div>
             </div>
+
             <!-- ===================================== -->
-            <!-- Gene search box -->
+            <!-- Centrality controls -->
             <!-- ===================================== -->
-            <div class="boxed-section align-center">
-                <span>Search</span>
-                <div class="round-checkbox">
-                    <i class=" fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="gene-search" placeholder="Specific Gene">
-                    <ul id="suggestions" class="suggestions" hidden></ul>
+            <div class="boxed-section">
+                <span>Node size</span>
+
+                <div class="slider-container">
+                    <div class="label-row">
+                        <label for="centrality-type-dropdown" class="control-label">
+                            Centrality:
+                            <div class="info-tooltip-container">
+                                <div class="info-tooltip-icon">i</div>
+                                <div class="info-tooltip-content">
+                                    'Normalized' options divide the centrality score by the number of phenotypes observed in KO mice
+                                </div>
+                            </div>
+                        </label>
+                        <select class="exporter" id="centrality-type-dropdown"
+                            onchange="handleCentralityTypeChange(this.value)">
+                            <option value="none" selected>None</option>
+                            <option value="degree">Degree</option>
+                            <option value="betweenness">Betweenness</option>
+                            <option value="normalized_degree">Normalized Degree</option>
+                            <option value="normalized_betweenness">Normalized Betweenness</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="slider-container hidden" id="centrality-slider-container">
+                    <div class="label-row">
+                        <span class="control-label">Scale:</span>
+                        <span id="centrality-scale-value">0</span>
+                    </div>
+                    <div class="slider-element" id="centrality-scale-slider"></div>
                 </div>
             </div>
         </div>
@@ -246,8 +293,8 @@
 
         <div class="panel-section">
             <div class="panel-title">
-                <i class="fa-solid fa-puzzle-piece"></i>
-                Layout & Display
+                <i class="fa-solid fa-tablet-screen-button"></i>
+                Display
             </div>
             <!-- Network layout -->
 
@@ -288,65 +335,96 @@
                 <div class="slider-element" id="nodeRepulsion-slider"></div>
             </div>
         </div>
-
+        
         <!-- ===================================== -->
-        <!-- Export -->
+        <!-- Export (Mobile only) -->
         <!-- ===================================== -->
-        <div class="panel-section">
+        <div class="panel-section export-mobile">
             <div class="panel-title">
                 <i class="fa-solid fa-download"></i>
                 Export
                 <div class="info-tooltip-container">
                     <div class="info-tooltip-icon">i</div>
-                    <div class="info-tooltip-content">GraphML can be used to visualize with desktop version of Cytoscape.</div>
+                    <div class="info-tooltip-content">
+                        GraphML can be used for visualization in other network analysis tools.
+                    </div>
                 </div>
             </div>
-
-            <!-- ===================================== -->
-            <!-- Exporter -->
-            <!-- ===================================== -->
             <div class="exporter-group">
-                <button class="exporter" id="export-png">
+                <button class="exporter" id="export-png-mobile">
                     <i class="fa-regular fa-image"></i>
                     PNG
                 </button>
-                <button class="exporter" id="export-csv">
+                <button class="exporter" id="export-csv-mobile">
                     <i class="fa-regular fa-file-lines"></i>
                     CSV
                 </button>
-                <button class="exporter" id="export-graphml">
+                <button class="exporter" id="export-graphml-mobile">
                     <i class="fa-solid fa-project-diagram"></i>
                     GraphML
                 </button>
             </div>
         </div>
+
     </div>
 
 </div>
 
 
-    <!-- ========================================  -->
-    <!-- Resources Section -->
-    <!-- ========================================  -->
-    <div class="resources-container">
-        <div class="resource-section">
-            <div class="resource-buttons">
-                <a class="resource-btn" href="https://github.com/akikuno/TSUMUGI-dev/blob/main/README.md"
-                    target="_blank">
-                    <i class="fa-regular fa-file-lines"></i> Documentation
-                </a>
-                <a class="resource-btn" href="https://forms.gle/TpLeatthUBLN57PU6" target="_blank">
-                    <i class="fa-regular fa-comment-dots"></i> Contact
-                </a>
+    <!-- ===================================== -->
+    <!-- Export (Desktop only) -->
+    <!-- ===================================== -->
+    <div class="panel-section export-desktop">
+        <div class="panel-title">
+            <i class="fa-solid fa-download"></i>
+            Export
+            <div class="info-tooltip-container">
+                <div class="info-tooltip-icon">i</div>
+                <div class="info-tooltip-content">
+                    GraphML can be used for visualization in other network analysis tools.
+                </div>
             </div>
         </div>
-
+        <div class="exporter-group">
+            <button class="exporter" id="export-png">
+                <i class="fa-regular fa-image"></i>
+                PNG
+            </button>
+            <button class="exporter" id="export-csv">
+                <i class="fa-regular fa-file-lines"></i>
+                CSV
+            </button>
+            <button class="exporter" id="export-graphml">
+                <i class="fa-solid fa-project-diagram"></i>
+                GraphML
+            </button>
+        </div>
     </div>
+
 
     <!-- ========================================  -->
     <!-- Footer -->
     <!-- ========================================  -->
     <footer>
+
+        <!-- ========================================  -->
+        <!-- Resources Section -->
+        <!-- ========================================  -->
+        <div class="resources-container">
+            <div class="resource-section">
+                <div class="resource-buttons">
+                    <a class="resource-btn" href="https://github.com/akikuno/TSUMUGI-dev/blob/main/README.md"
+                        target="_blank">
+                        <i class="fa-regular fa-file-lines"></i> Documentation
+                    </a>
+                    <a class="resource-btn" href="https://forms.gle/TpLeatthUBLN57PU6" target="_blank">
+                        <i class="fa-regular fa-comment-dots"></i> Contact
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
         <p>TSUMUGI version 1.0.0</p>
         <!-- <p><i class="fa-regular fa-newspaper"></i><a href="https://example.com" target="_blank">Article</a> </p>-->
         <p>

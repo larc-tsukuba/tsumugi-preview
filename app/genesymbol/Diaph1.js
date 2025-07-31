@@ -8,6 +8,7 @@ import { loadJSONGz, loadJSON } from "../js/data_loader.js";
 import { setupGeneSearch } from "../js/gene_searcher.js";
 import { highlightDiseaseAnnotation } from "../js/highlighter.js";
 import { setupPhenotypeSearch } from "../js/phenotype_searcher.js";
+import { initializeCentralitySystem, recalculateCentrality } from "../js/centrality.js";
 
 // ############################################################################
 // Input handler
@@ -107,24 +108,48 @@ const nodeRepulsionMax = 10000;
 const componentSpacingMin = 1;
 const componentSpacingMax = 200;
 
+// Use different defaults for gene symbol pages only
+const isGeneSymbolPage = "loadJSONGz('../../data/genesymbol/Diaph1.json.gz')".includes("genesymbol");
+const defaultNodeRepulsion = isGeneSymbolPage ? 8 : 5;
+
 let nodeRepulsionValue = scaleToOriginalRange(
-    parseFloat(document.getElementById("nodeRepulsion-slider").value),
+    defaultNodeRepulsion,
     nodeRepulsionMin,
     nodeRepulsionMax,
 );
 
 let componentSpacingValue = scaleToOriginalRange(
-    parseFloat(document.getElementById("nodeRepulsion-slider").value),
+    defaultNodeRepulsion,
     componentSpacingMin,
     componentSpacingMax,
 );
 
 function getLayoutOptions() {
-    return {
+    const baseOptions = {
         name: currentLayout,
         nodeRepulsion: nodeRepulsionValue,
         componentSpacing: componentSpacingValue,
     };
+
+    // Add enhanced options for COSE layout to prevent hairball effect (gene symbol pages only)
+    if (currentLayout === "cose" && isGeneSymbolPage) {
+        return {
+            ...baseOptions,
+            idealEdgeLength: 100,           // Increase ideal edge length for better spacing
+            nodeOverlap: 20,                // Increase to prevent node overlap
+            padding: 30,                    // Add padding around the layout
+            animate: true,                  // Enable animation for better visual feedback
+            animationDuration: 500,         // Animation duration in ms
+            gravity: -1.2,                  // Negative gravity to push nodes apart
+            numIter: 1500,                  // More iterations for better layout
+            initialTemp: 200,               // Higher initial temperature for better spreading
+            coolingFactor: 0.95,            // Slower cooling for better results
+            minTemp: 1.0,                   // Minimum temperature threshold
+            edgeElasticity: 100,            // Edge elasticity for better edge distribution
+        };
+    }
+
+    return baseOptions;
 }
 
 const cy = cytoscape({
@@ -137,7 +162,7 @@ const cy = cytoscape({
                 label: "data(label)",
                 "text-valign": "center",
                 "text-halign": "center",
-                "font-size": "20px",
+                "font-size": isGeneSymbolPage ? "10px" : "20px",
                 width: 15,
                 height: 15,
                 "background-color": function (ele) {
@@ -160,22 +185,22 @@ const cy = cytoscape({
         {
             selector: ".disease-highlight", // 疾患ハイライト用クラス
             style: {
-                "border-width": 3,
+                "border-width": 5,
                 "border-color": "#fc4c00",
             },
         },
         {
             selector: ".gene-highlight", // 遺伝子検索ハイライト用クラス
             style: {
-                "color": "#028760",
+                "color": "#006400",
                 "font-weight": "bold",
             },
         },
         {
             selector: ".phenotype-highlight", // 表現型ハイライト用クラス
             style: {
-                "border-width": 3,
-                "border-color": "#28a745",
+                "border-width": 5,
+                "border-color": "#3FA7D6",
             },
         },
     ],
@@ -201,7 +226,6 @@ function handleMobileResize() {
 // モバイルでの初期化完了後にCytoscapeを調整
 setTimeout(() => {
     if (window.innerWidth <= 600) {
-        console.log("📱 Mobile device detected - applying mobile fixes");
         cy.resize();
         cy.fit();
         cy.center();
@@ -239,7 +263,9 @@ document.getElementById("layout-dropdown").addEventListener("change", function (
 
 // Initialization of the Edge size slider
 const edgeSlider = document.getElementById("filter-edge-slider");
-noUiSlider.create(edgeSlider, { start: [1, 10], connect: true, range: { min: 1, max: 10 }, step: 1 });
+// Set default to 5 for gene symbol pages, 1 for others
+const defaultPhenotypeSimMin = isGeneSymbolPage ? 5 : 1;
+noUiSlider.create(edgeSlider, { start: [defaultPhenotypeSimMin, 10], connect: true, range: { min: 1, max: 10 }, step: 1 });
 
 
 // Update the slider values when the sliders are moved
@@ -336,6 +362,11 @@ function filterByNodeColorAndEdgeSize() {
     if (window.refreshPhenotypeList) {
         window.refreshPhenotypeList();
     }
+    
+    // 11. Recalculate centrality for the filtered network
+    if (typeof window.recalculateCentrality === 'function') {
+        window.recalculateCentrality();
+    }
 }
 
 
@@ -348,6 +379,10 @@ let target_phenotype = "";
 // フィルタリング関数のラッパー
 function applyFiltering() {
     filterElementsByGenotypeAndSex(elements, cy, target_phenotype, filterByNodeColorAndEdgeSize);
+    // フィルタリング後にCentrality値を再計算
+    if (typeof window.recalculateCentrality === "function") {
+        window.recalculateCentrality();
+    }
 }
 
 // フォーム変更時にフィルタリング関数を実行
@@ -379,7 +414,7 @@ setupPhenotypeSearch({ cy, elements });
 // Slider for Font size
 // --------------------------------------------------------
 
-createSlider("font-size-slider", 20, 1, 50, 1, (intValues) => {
+createSlider("font-size-slider", isGeneSymbolPage ? 10 : 20, 1, 50, 1, (intValues) => {
     document.getElementById("font-size-value").textContent = intValues;
     cy.style()
         .selector("node")
@@ -396,7 +431,7 @@ createSlider("edge-width-slider", 5, 1, 10, 1, (intValues) => {
     cy.style()
         .selector("edge")
         .style("width", function (ele) {
-            return scaleValue(ele.data("edge_size"), edgeMin, edgeMax, 0.5, 2) * intValues;
+            return scaleValue(ele.data("edge_size"), edgeMin, edgeMax, 0.5, 2) * (intValues * 0.4);
         })
         .update();
 });
@@ -416,7 +451,7 @@ function updateNodeRepulsionVisibility() {
 updateNodeRepulsionVisibility();
 layoutDropdown.addEventListener("change", updateNodeRepulsionVisibility);
 
-createSlider("nodeRepulsion-slider", 5, 1, 10, 1, (intValues) => {
+createSlider("nodeRepulsion-slider", defaultNodeRepulsion, 1, 10, 1, (intValues) => {
     nodeRepulsionValue = scaleToOriginalRange(intValues, nodeRepulsionMin, nodeRepulsionMax);
     componentSpacingValue = scaleToOriginalRange(intValues, componentSpacingMin, componentSpacingMax);
     document.getElementById("node-repulsion-value").textContent = intValues;
@@ -424,12 +459,22 @@ createSlider("nodeRepulsion-slider", 5, 1, 10, 1, (intValues) => {
 });
 
 // ############################################################################
+// Initialize centrality system
+// ############################################################################
+
+// Initialize centrality system with dependencies
+initializeCentralitySystem(cy, createSlider);
+
+// Make recalculateCentrality available globally for use in filters
+window.recalculateCentrality = recalculateCentrality;
+
+// ############################################################################
 // Tooltip handling
 // ############################################################################
 
 // Show tooltip on tap
 cy.on("tap", "node, edge", function (event) {
-    showTooltip(event, cy, map_symbol_to_id, target_phenotype);
+    showTooltip(event, cy, map_symbol_to_id, target_phenotype, nodeColorMin, nodeColorMax, edgeMin, edgeMax, nodeSizes);
 });
 
 // Hide tooltip when tapping on background
@@ -466,5 +511,21 @@ document.getElementById("export-csv").addEventListener("click", function () {
 // --------------------------------------------------------
 
 document.getElementById("export-graphml").addEventListener("click", function () {
+    exportGraphAsGraphML(cy, file_name);
+});
+
+// --------------------------------------------------------
+// Mobile Export buttons
+// --------------------------------------------------------
+
+document.getElementById("export-png-mobile").addEventListener("click", function () {
+    exportGraphAsPNG(cy, file_name);
+});
+
+document.getElementById("export-csv-mobile").addEventListener("click", function () {
+    exportGraphAsCSV(cy, file_name);
+});
+
+document.getElementById("export-graphml-mobile").addEventListener("click", function () {
     exportGraphAsGraphML(cy, file_name);
 });
