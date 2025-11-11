@@ -2,14 +2,12 @@
 // Tooltip Handling Functions
 // ############################################################
 
-import { scaleValue } from "./value_scaler.js";
-
 /*
     Formats phenotypes for tooltips, placing and highlighting the target phenotype at the top.
 */
 function formatPhenotypesWithHighlight(phenotypes, target_phenotype) {
     if (!target_phenotype) {
-        return phenotypes.map((anno) => "・ " + anno).join("<br>");
+        return phenotypes.map((anno) => "- " + anno).join("<br>");
     }
 
     const matching = [];
@@ -28,9 +26,9 @@ function formatPhenotypesWithHighlight(phenotypes, target_phenotype) {
     return ordered
         .map((phenotype) => {
             if (phenotype.startsWith(target_phenotype)) {
-                return `🚩 ${phenotype}`;
+                return `[!] ${phenotype}`;
             } else {
-                return "・ " + phenotype;
+                return "- " + phenotype;
             }
         })
         .join("<br>");
@@ -41,11 +39,7 @@ function createTooltip(
     cy,
     map_symbol_to_id,
     target_phenotype = null,
-    nodeColorMin = null,
-    nodeColorMax = null,
-    edgeMin = null,
-    edgeMax = null,
-    allNodeColors = null,
+    { allNodeColors } = {},
 ) {
     const data = event.target.data();
     let tooltipText = "";
@@ -57,46 +51,27 @@ function createTooltip(
     if (event.target.isNode()) {
         const geneID = map_symbol_to_id[data.id] || "UNKNOWN";
         const url_impc = `https://www.mousephenotype.org/data/genes/${geneID}`;
-
-        // Calculate severity score only if node colors are not binary (0 or 1 only)
-        let severityText = "";
-        let isBinary = false;
-
-        // Check if all node colors are 0 or 1
-        if (allNodeColors && allNodeColors.length > 0) {
-            isBinary = allNodeColors.every((color) => color === 0 || color === 1);
-        }
-
-        if (
-            nodeColorMin !== null &&
-            nodeColorMax !== null &&
-            !isBinary &&
-            Math.abs(nodeColorMax - nodeColorMin) > 0.0001
-        ) {
-            const originalNodeColor = data.original_node_color || data.node_color;
-            const severityScore = scaleValue(originalNodeColor, nodeColorMin, nodeColorMax, 1, 10);
-            severityText = ` (Severity: ${severityScore.toFixed(1)}/10)`;
-        }
-
+        const rawSeverity = Number.isFinite(data.original_node_color) ? data.original_node_color : data.node_color;
+        const nodeColorSet = Array.isArray(allNodeColors) ? new Set(allNodeColors) : new Set();
+        const uniqueValues = [...nodeColorSet];
+        const isBinary =
+            uniqueValues.length === 1 &&
+            ["0", "1", "100"].includes(String(Math.round(Number(uniqueValues[0]))));
+        const severityValue = !isBinary && Number.isFinite(rawSeverity) ? Math.round(rawSeverity) : null;
+        const severityText = severityValue !== null ? ` (Severity: ${severityValue})` : "";
         tooltipText = `<b>Phenotypes of <a href="${url_impc}" target="_blank">${data.id} KO mice</a>${severityText}</b><br>`;
         tooltipText += formatPhenotypesWithHighlight(phenotypes, target_phenotype);
-        // もしdiseasesが""出ない場合は、Associated Human Diseasesを追加
+        // Append the associated human diseases section when data is available
         if (diseases && diseases.length > 0 && diseases[0] !== "") {
             tooltipText += `<br><br><b>Associated Human Diseases</b><br>`;
-            tooltipText += diseases.map((disease) => "・ " + disease).join("<br>");
+            tooltipText += diseases.map((disease) => "- " + disease).join("<br>");
         }
         pos = event.target.renderedPosition();
     } else if (event.target.isEdge()) {
         const sourceNode = cy.getElementById(data.source).data("label");
         const targetNode = cy.getElementById(data.target).data("label");
-
-        // Calculate similarity score
-        let similarityText = "";
-        if (edgeMin !== null && edgeMax !== null) {
-            const similarityScore = scaleValue(data.edge_size, edgeMin, edgeMax, 1, 10);
-            similarityText = ` (Similarity: ${similarityScore.toFixed(1)}/10)`;
-        }
-
+        const hasSimilarityValue = Number.isFinite(data.edge_size);
+        const similarityText = hasSimilarityValue ? ` (Similarity: ${Math.round(data.edge_size)})` : "";
         tooltipText = `<b>Shared phenotypes of ${sourceNode} and ${targetNode} KOs${similarityText}</b><br>`;
         tooltipText += formatPhenotypesWithHighlight(phenotypes, target_phenotype);
 
@@ -174,25 +149,19 @@ export function showTooltip(
     cy,
     map_symbol_to_id,
     target_phenotype = null,
-    nodeColorMin = null,
-    nodeColorMax = null,
-    edgeMin = null,
-    edgeMax = null,
-    allNodeColors = null,
+    nodeColorMin,
+    nodeColorMax,
+    edgeMin,
+    edgeMax,
+    nodeSizes,
 ) {
     removeTooltips();
 
-    const { tooltipText, pos } = createTooltip(
-        event,
-        cy,
-        map_symbol_to_id,
-        target_phenotype,
+    const { tooltipText, pos } = createTooltip(event, cy, map_symbol_to_id, target_phenotype, {
         nodeColorMin,
         nodeColorMax,
-        edgeMin,
-        edgeMax,
-        allNodeColors,
-    );
+        allNodeColors: nodeSizes,
+    });
 
     const tooltip = document.createElement("div");
     tooltip.classList.add("cy-tooltip");

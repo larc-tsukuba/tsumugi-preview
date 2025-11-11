@@ -19,29 +19,48 @@ export function exportGraphAsPNG(cy, file_name) {
 }
 
 // --------------------------------------------------------
+// JPG Exporter
+// --------------------------------------------------------
+
+export function exportGraphAsJPG(cy, file_name) {
+    const jpgContent = cy.jpg({
+        scale: 6.25,
+        full: true,
+        quality: 0.95,
+    });
+
+    const a = document.createElement("a");
+    a.href = jpgContent;
+    a.download = `${file_name}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// --------------------------------------------------------
 // CSV Exporter
 // --------------------------------------------------------
 
 export function exportGraphAsCSV(cy, file_name) {
-    // calculateConnectedComponentsを利用して連結成分を取得
+    // Use calculateConnectedComponents to gather connected components
     const connected_component = calculateConnectedComponents(cy);
 
-    // CSVのヘッダー行
+    // CSV header row
     let csvContent = "module,gene,phenotypes\n";
 
-    // クラスター番号を割り当てて、CSVフォーマットに変換
+    // Assign module numbers and format the data as CSV rows
     connected_component.forEach((component, moduleIndex) => {
         const moduleNumber = moduleIndex + 1;
 
         Object.keys(component).forEach((gene) => {
-            const phenotypes = component[gene].join(";"); // 表現型をセミコロン区切りで結合
+            const phenotypes = component[gene].join(";"); // Join phenotypes with semicolons
 
-            // CSVの各行を生成
+            // Append each CSV row
             csvContent += `${moduleNumber},${gene},"${phenotypes}"\n`;
         });
     });
 
-    // CSVファイルを生成しダウンロード
+    // Generate and download the CSV file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -58,7 +58,7 @@ a {
 /* ======================================================== */
 /* control-panel-container */
 /* ======================================================== */
-/* 左パネル */
+/* Left panel */
 .left-control-panel-container {
     flex: 1;
     min-width: 120px;
@@ -69,7 +69,7 @@ a {
     background-color: white;
 }
 
-/* 右パネル */
+/* Right panel */
 .right-control-panel-container {
     flex: 1;
     min-width: 120px;
@@ -104,7 +104,7 @@ a {
 /* ======================================================== */
 
 .cy-container {
-    flex: 2;
+    flex: 3;
     padding: 10px;
     margin: 0 auto;
     box-sizing: border-box;
@@ -195,7 +195,7 @@ a {
 /* Input style */
 #gene-search,
 #phenotype-search {
-    width: calc(100% - 20px);
+    width: 100%;
     padding: 10px 10px 10px 35px;
     font-size: 14px;
     border: 2px solid #ccc;
@@ -291,11 +291,6 @@ ul.suggestions {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Hidden class for centrality slider */
-.hidden {
-    display: none;
-}
-
 /* Suggestion items */
 ul.suggestions li {
     padding: 10px;
@@ -320,7 +315,7 @@ ul.suggestions li:hover {
     background-color: #fff;
 }
 
-/* タイトル風スタイルをつける */
+/* Title-style label overlay */
 .boxed-section > span {
     position: absolute;
     top: 0;
@@ -338,19 +333,18 @@ ul.suggestions li:hover {
 }
 
 .boxed-section.align-center {
-    /* 中央揃えのためのスタイル */
+    /* Keep the content left-aligned */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
+    width: 100%;
     padding: 10px;
     margin-bottom: 20px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
 }
 
-/* 丸型チェックボックススタイル */
+/* Rounded checkbox styling */
 .round-checkbox {
     position: relative;
     margin: 8px 0;
@@ -382,7 +376,7 @@ ul.suggestions li:hover {
     box-sizing: border-box;
 }
 
-/* チェック時だけ黄色背景に */
+/* Highlight in yellow only when checked */
 .round-checkbox input[type="checkbox"]:checked + label:before {
     background-color: #ff8c00;
 }
@@ -410,13 +404,6 @@ ul.suggestions li:hover {
     padding: 12px 20px;
     margin-top: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.exporter:hover {
-    color: #333;
-    border-color: #ff7800;
-    background-color: rgba(255, 120, 0, 0.05);
 }
 
 .exporter-group {
@@ -512,7 +499,7 @@ ul.suggestions li:hover {
 footer {
     margin: 20px 0 10px;
     padding: 20px;
-    color: #333;
+    color: #666;
     font-size: 0.9em;
     text-align: center;
 }
@@ -526,32 +513,20 @@ footer i {
 }
 
 footer a {
-    color: #333;
+    color: #666;
     font-size: 1em;
     text-decoration: none;
+    font-weight: bold;
+}
+
+footer a:hover {
+    text-decoration: underline;
 }
 
 /* ======================================================== */
-/* Export section visibility */
+/* Mobile-friendly design */
 /* ======================================================== */
-/* デスクトップでは通常のExportを表示、モバイル用は非表示 */
-.export-mobile {
-    display: none;
-}
-
-/* デスクトップ用のExportセクション（独立した配置） */
-.export-desktop {
-    max-width: 800px;
-    margin: 30px auto;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-}
-
-/* ======================================================== */
-/* スマホ向けデザイン */
-/* ======================================================== */
-/* 初期状態でアイコンを非表示 */
+/* Hide the icon by default */
 button.menu-toggle-icon {
     display: none;
     background-color: transparent;
@@ -616,7 +591,7 @@ button.menu-toggle-icon {
         justify-content: center;
     }
 
-    /* パネルコンテナの統合スタイル */
+    /* Consolidated styling for panel containers */
     .left-control-panel-container {
         position: fixed;
         top: 0;
@@ -654,10 +629,8 @@ button.menu-toggle-icon {
     .cy-container {
         margin: 20px 0;
         width: 90%;
-        height: 400px;
-        /* 固定高さを設定してCytoscapeが初期化できるようにする */
-        min-height: 400px;
-        /* 最小高さも設定 */
+        height: 400px; /* 固定高さを設定してCytoscapeが初期化できるようにする */
+        min-height: 400px; /* 最小高さも設定 */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -665,8 +638,7 @@ button.menu-toggle-icon {
 
     .cy {
         width: 100%;
-        height: 350px;
-        /* モバイルでの固定高さ */
+        height: 350px; /* モバイルでの固定高さ */
         min-height: 350px;
     }
 
@@ -690,15 +662,6 @@ button.menu-toggle-icon {
 
     .resource-buttons {
         flex-direction: column;
-    }
-
-    /* モバイルではデスクトップ用Exportを非表示、モバイル用を表示 */
-    .export-desktop {
-        display: none;
-    }
-
-    .export-mobile {
-        display: block;
     }
 }
 
