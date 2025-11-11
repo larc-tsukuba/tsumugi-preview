@@ -313,12 +313,15 @@ noUiSlider.create(edgeSlider, {
 const NODE_SLIDER_MIN = 1;
 const NODE_SLIDER_MAX = 100;
 const nodeSlider = document.getElementById("filter-node-slider");
-noUiSlider.create(nodeSlider, {
-    start: [NODE_SLIDER_MIN, NODE_SLIDER_MAX],
-    connect: true,
-    range: { min: NODE_SLIDER_MIN, max: NODE_SLIDER_MAX },
-    step: 1,
-});
+
+if (nodeSlider) {
+    noUiSlider.create(nodeSlider, {
+        start: [NODE_SLIDER_MIN, NODE_SLIDER_MAX],
+        connect: true,
+        range: { min: NODE_SLIDER_MIN, max: NODE_SLIDER_MAX },
+        step: 1,
+    });
+}
 
 
 // Update the slider values when the sliders are moved
@@ -329,12 +332,16 @@ edgeSlider.noUiSlider.on("update", function (values) {
 });
 
 // Update the slider values when the sliders are moved
-nodeSlider.noUiSlider.on("update", function (values) {
-    const intValues = values.map((value) => Math.round(value));
-    document.getElementById("node-color-value").textContent = intValues.join(" - ");
-    filterByNodeColorAndEdgeSize();
-});
-
+if (nodeSlider && nodeSlider.noUiSlider) {
+    nodeSlider.noUiSlider.on("update", function (values) {
+        const intValues = values.map((value) => Math.round(value));
+        const label = document.getElementById("node-color-value");
+        if (label) {
+            label.textContent = intValues.join(" - ");
+        }
+        filterByNodeColorAndEdgeSize();
+    });
+}
 
 
 
@@ -343,8 +350,10 @@ nodeSlider.noUiSlider.on("update", function (values) {
 // --------------------------------------------------------
 
 function filterByNodeColorAndEdgeSize() {
-
-    const nodeSliderValues = nodeSlider.noUiSlider.get().map(Number); // REMOVE_THIS_LINE_IF_BINARY_PHENOTYPE
+    const hasNodeSlider = nodeSlider && nodeSlider.noUiSlider;
+    const nodeSliderValues = hasNodeSlider
+        ? nodeSlider.noUiSlider.get().map(Number)
+        : [NODE_SLIDER_MIN, NODE_SLIDER_MAX];
     const edgeSliderValues = edgeSlider.noUiSlider.get().map(Number);
 
     const nodeLowerBound = Math.min(nodeMin, nodeMax);
