@@ -392,7 +392,6 @@ increased circulating phosphate level
 increased circulating potassium level
 increased circulating serum albumin level
 increased circulating sodium level
-increased circulating thyroxine level
 increased circulating total protein level
 increased circulating triglyceride level
 increased circulating unsaturated transferrin level

@@ -1,14 +1,12 @@
 1500009L16Rik
 1700003F12Rik
 1700008P02Rik
-1700010I14Rik
 1700019D03Rik
 2210408I21Rik
 2610008E11Rik
 2700097O09Rik
 2810408A11Rik
 3425401B19Rik
-4921509C19Rik
 4930444P10Rik
 4930447C04Rik
 4930591A17Rik
@@ -65,10 +63,9 @@ Acp2
 Acsf2
 Acsl4
 Acsl5
-Acta2
+Acsm1
 Actg1
 Actl6a
-Actr3b
 Actr5
 Actr8
 Acvr1
@@ -193,9 +190,9 @@ Ankmy2
 Ankrd10
 Ankrd11
 Ankrd13a
-Ankrd13c
 Ankrd28
 Ankrd49
+Ankrd50
 Ankrd52
 Ankrd9
 Anks1
@@ -214,7 +211,6 @@ Ap1s2
 Ap2a1
 Ap2a2
 Ap2b1
-Ap3s1
 Ap3s2
 Ap4e1
 Ap4m1
@@ -242,7 +238,6 @@ Arfgef1
 Arg2
 Arhgap17
 Arhgap21
-Arhgap22
 Arhgap25
 Arhgap28
 Arhgap29
@@ -261,7 +256,6 @@ Arih1
 Arih2
 Arl10
 Arl15
-Arl4d
 Arl5c
 Arl6ip1
 Armc2
@@ -287,11 +281,9 @@ Ascl5
 Asf1a
 Ash1l
 Ash2l
-Asic2
 Asic3
 Asns
 Aspa
-Aspg
 Aspm
 Aspn
 Aspscr1
@@ -314,11 +306,9 @@ Atl2
 Atl3
 Atn1
 Atp11a
-Atp11b
 Atp11c
 Atp13a1
 Atp13a3
-Atp13a5
 Atp1a1
 Atp1a3
 Atp1b1
@@ -326,7 +316,6 @@ Atp1b3
 Atp2a2
 Atp2b1
 Atp2b3
-Atp5f1a
 Atp5f1b
 Atp5f1e
 Atp5mc2
@@ -353,9 +342,7 @@ AU040320
 Aurka
 Aurkaip1
 Avp
-AW112010
 Axin2
-B230219D22Rik
 B2m
 B3galnt2
 B3galt1
@@ -432,7 +419,6 @@ Bnip1
 Bnip2
 Boc
 Bod1
-Bok
 Bola1
 Bola2
 Borcs6
@@ -474,7 +460,6 @@ C2cd2l
 C2cd3
 C2cd4b
 C2cd5
-C5ar2
 C9
 C9orf72
 Cab39
@@ -541,10 +526,8 @@ Ccdc198
 Ccdc25
 Ccdc28a
 Ccdc50
-Ccdc51
 Ccdc57
 Ccdc59
-Ccdc66
 Ccdc92
 Ccdc93
 Ccl26
@@ -556,7 +539,6 @@ Ccnq
 Ccnt1
 Ccnt2
 Ccr3
-Ccr8
 Cct3
 Cct5
 Cct7
@@ -600,7 +582,6 @@ Cdk2ap2
 Cdk4
 Cdk5rap2
 Cdk5rap3
-Cdk6
 Cdk8
 Cdk9
 Cdkl1
@@ -610,7 +591,6 @@ Cdkn2aip
 Cdkn3
 Cdsn
 Cdyl2
-Ceacam5
 Cecr2
 Celf4
 Celsr1
@@ -662,7 +642,6 @@ Chd9
 Chdh
 Cherp
 Chfr
-Chic1
 Chic2
 Chmp2b
 Chmp3
@@ -671,7 +650,6 @@ Chmp7
 Chn1
 Chordc1
 Chp1
-Chrdl1
 Chrna5
 Chrna9
 Chrnb1
@@ -690,7 +668,6 @@ Cib3
 Cibar1
 Cidea
 Cidec
-Cilk1
 Cimap1b
 Cimip2b
 Cimip6
@@ -759,7 +736,6 @@ Col11a1
 Col11a2
 Col18a1
 Col1a2
-Col26a1
 Col27a1
 Col2a1
 Col4a2
@@ -810,7 +786,6 @@ Cracdl
 Cramp1
 Crcp
 Creb3
-Cript
 Crispld2
 Crlf2
 Crlf3
@@ -846,7 +821,6 @@ Ctsm
 Cttnbp2
 Ctu1
 Ctu2
-Cubn
 Cuedc1
 Cul4a
 Cul5
@@ -913,7 +887,6 @@ Dctd
 Dctn6
 Dcun1d3
 Ddb1
-Ddc
 Ddost
 Ddx10
 Ddx17
@@ -940,7 +913,6 @@ Dgkk
 Dguok
 Dhcr7
 Dhfr
-Dhps
 Dhrs7b
 Dhx15
 Dhx16
@@ -988,21 +960,17 @@ Dnajb11
 Dnajb14
 Dnajb3
 Dnajc10
-Dnajc13
 Dnajc14
 Dnajc17
 Dnajc19
 Dnajc2
 Dnajc30
 Dnajc7
-Dnajc8
 Dnajc9
-Dnal1
 Dnase1l2
 Dnase1l3
 Dnase2b
 Dnd1
-Dnm1
 Dnm1l
 Dnm2
 Dnmbp
@@ -1014,7 +982,6 @@ Dock2
 Dock6
 Dock9
 Dok7
-Dop1a
 Dop1b
 Dpf1
 Dpf2
@@ -1125,7 +1092,6 @@ Emg1
 Emilin3
 Eml1
 Eml3
-Emp3
 Emsy
 Emx1
 Enc1
@@ -1139,7 +1105,6 @@ Entpd1
 Entpd6
 Entr1
 Eomes
-Epas1
 Epb41
 Epb41l1
 Epb41l4a
@@ -1151,7 +1116,6 @@ Epha3
 Ephb1
 Ephb4
 Ephx1
-Epn3
 Eppin
 Eprs1
 Eps15
@@ -1182,7 +1146,6 @@ Etv4
 Etv6
 Evc2
 Ewsr1
-Exd1
 Exoc1
 Exoc3
 Exoc3l2
@@ -1198,7 +1161,6 @@ F7
 F730043M19Rik
 Fa2h
 Faah
-Fabp7
 Fadd
 Fads1
 Fads3
@@ -1249,7 +1211,6 @@ Fbn1
 Fbn2
 Fbrs
 Fbrsl1
-Fbxl15
 Fbxl19
 Fbxl2
 Fbxl3
@@ -1361,7 +1322,6 @@ Fut4
 Fuz
 Fyb1
 Fyco1
-Fyttd1
 Fzd1
 Fzd2
 Fzd3
@@ -1372,7 +1332,6 @@ Gabarapl2
 Gabpa
 Gabra2
 Gabra5
-Gabrg1
 Gabrg2
 Gabrg3
 Gad2
@@ -1414,7 +1373,6 @@ Gemin4
 Gemin5
 Get1
 Gfi1b
-Gfpt2
 Gga1
 Ggnbp2
 Ggps1
@@ -1541,8 +1499,6 @@ Gys1
 Gys2
 Gzf1
 H13
-H1f0
-H1f10
 H1f8
 H2az1
 H4c16
@@ -1553,7 +1509,6 @@ Hal
 Hars2
 Has1
 Haus4
-Hbb-bh2
 Hbq1a
 Hbs1l
 Hcar1
@@ -1572,7 +1527,6 @@ Hectd1
 Hectd3
 Hells
 Helq
-Hemgn
 Heph
 Herc1
 Herc6
@@ -1610,7 +1564,6 @@ Hnf4a
 Hnrnpab
 Hnrnpc
 Hnrnpd
-Hnrnpdl
 Hnrnph1
 Hnrnpr
 Hook1
@@ -1632,7 +1585,6 @@ Hsf4
 Hsf5
 Hspa5
 Hspb1
-Hspb3
 Hspb6
 Hspb8
 Hspbap1
@@ -1660,7 +1612,6 @@ Ifng
 Ifngr1
 Ift122
 Ift172
-Ift25
 Ift43
 Ift52
 Ift56
@@ -1673,10 +1624,8 @@ Iglon5
 Igsf11
 Igsf9b
 Ik
-Ikzf4
 Ikzf5
 Il10ra
-Il12rb1
 Il15
 Il17ra
 Il17rc
@@ -1746,7 +1695,6 @@ Ism1
 Ist1
 Isyna1
 Itch
-Itfg2
 Itga3
 Itga8
 Itgae
@@ -1805,7 +1753,6 @@ Kctd10
 Kctd11
 Kctd15
 Kctd3
-Kctd7
 Kctd9
 Kdm1a
 Kdm3a
@@ -1816,7 +1763,6 @@ Keg1
 Khdrbs3
 Khsrp
 Kif13a
-Kif13b
 Kif16b
 Kif1b
 Kif20a
@@ -1891,7 +1837,6 @@ Larp1
 Larp4b
 Larp6
 Lats1
-Lbp
 Lbr
 Lca5l
 Lclat1
@@ -1918,7 +1863,6 @@ Lhx5
 Lhx6
 Liat1
 Lilrb4b
-Limk2
 Lingo2
 Lipe
 Lipt2
@@ -1979,7 +1923,6 @@ Ly6g6d
 Ly6l
 Ly86
 Lyn
-Lypd2
 Lypd3
 Lypd6b
 Lypla1
@@ -2012,7 +1955,6 @@ Mapkapk2
 Mapkapk3
 Mapkbp1
 Mapt
-Marchf3
 Marchf6
 Marchf8
 Marco
@@ -2259,7 +2201,6 @@ Ndufs2
 Ndufs3
 Ndufs7
 Ndufv1
-Ndufv3
 Necap2
 Nedd1
 Nedd4
@@ -2288,7 +2229,6 @@ Ngfr
 Nherf1
 Nherf2
 Nhlh2
-Nhlrc3
 Nhp2
 Nifk
 Nin
@@ -2369,7 +2309,6 @@ Nup62
 Nutm1
 Nwd2
 Nxn
-Nxpe5
 Oaz2
 Ociad1
 Ociad2
@@ -2392,7 +2331,6 @@ Orc6
 Osbp
 Osbpl11
 Osbpl3
-Osbpl6
 Osbpl8
 Oser1
 Osm
@@ -2427,7 +2365,6 @@ Panx1
 Paox
 Papola
 Paqr5
-Pard3
 Parp1
 Parp12
 Parva
@@ -2444,7 +2381,6 @@ Pbx3
 Pccb
 Pcdh18
 Pcdh9
-Pcdhb10
 Pcdhb13
 Pcdhb9
 Pcgf1
@@ -2544,7 +2480,6 @@ Pigq
 Pigz
 Pik3ap1
 Pik3c2a
-Pik3cb
 Pik3cg
 Pink1
 Pip4k2c
@@ -2567,7 +2502,6 @@ Pkn2
 Pkn3
 Pknox1
 Pkp4
-Pla2g2e
 Pla2g2f
 Pla2g4e
 Pla2g5
@@ -2589,7 +2523,6 @@ Plekha5
 Plekhf2
 Plekhm1
 Plekhm2
-Plin4
 Pllp
 Plod2
 Plod3
@@ -2635,7 +2568,6 @@ Ppfibp2
 Ppia
 Ppie
 Ppil1
-Ppil6
 Ppl
 Ppm1a
 Ppm1n
@@ -2713,7 +2645,6 @@ Prss55
 Prss8
 Psd3
 Psen1
-Psg16
 Psip1
 Pskh1
 Psma8
@@ -2758,7 +2689,6 @@ Pygo2
 Pyroxd1
 Qars1
 Qrsl1
-R3hcc1l
 Rab10
 Rab11a
 Rab11b
@@ -2778,7 +2708,6 @@ Rab3gap1
 Rab3gap2
 Rab3il1
 Rab3ip
-Rab43
 Rab5a
 Rab5b
 Rab5c
@@ -2811,7 +2740,6 @@ Rb1cc1
 Rbbp4
 Rbfox3
 Rbm10
-Rbm11
 Rbm20
 Rbm22
 Rbm25
@@ -2867,7 +2795,6 @@ Ric1
 Ric8a
 Ric8b
 Rida
-Rilpl1
 Rilpl2
 Rimklb
 Rimoc1
@@ -2895,8 +2822,6 @@ Rnf19b
 Rnf20
 Rnf208
 Rnf214
-Rnf216
-Rnf24
 Rnf25
 Rnf31
 Rnf34
@@ -2918,7 +2843,6 @@ Rpap3
 Rpe
 Rpia
 Rpl12
-Rprd1b
 Rps20
 Rps6kc1
 Rps6kl1
@@ -3132,8 +3056,6 @@ Slc4a10
 Slc51b
 Slc52a2
 Slc5a5
-Slc6a14
-Slc6a2
 Slc6a20b
 Slc6a5
 Slc6a6
@@ -3188,11 +3110,9 @@ Sox14
 Sox18
 Sox2
 Sox21
-Sox30
 Sox4
 Sp5
 Spag17
-Spag4
 Sparc
 Spart
 Spata16
@@ -3264,7 +3184,6 @@ Stim1
 Stim2
 Stimate
 Stk10
-Stk16
 Stk26
 Stk3
 Stk32a
@@ -3323,7 +3242,6 @@ Tacr3
 Tada1
 Taf12
 Taf13
-Taf15
 Taf2
 Taf5
 Taf6
@@ -3353,7 +3271,6 @@ Tbccd1
 Tbl1xr1
 Tbx1
 Tbx20
-Tbx22
 Tbx3
 Tbx4
 Tcaf2
@@ -3368,7 +3285,6 @@ Tdp1
 Tead1
 Tead3
 Tecpr2
-Tecr
 Tedc1
 Tedc2
 Tek
@@ -3461,6 +3377,7 @@ Tmem225
 Tmem237
 Tmem240
 Tmem248
+Tmem255b
 Tmem256
 Tmem260
 Tmem38b
@@ -3483,7 +3400,6 @@ Tmprss15
 Tmprss2
 Tmprss6
 Tmsb10
-Tmsb4x
 Tmtc4
 Tnfaip1
 Tnfrsf11b
@@ -3510,7 +3426,6 @@ Tor1a
 Tox
 Tox2
 Tox4
-Tpcn1
 Tpcn2
 Tpgs2
 Tph2
@@ -3521,7 +3436,6 @@ Tppp
 Tppp3
 Trabd2b
 Traf3ip1
-Traf3ip3
 Traf7
 Tram1
 Tram2
@@ -3579,7 +3493,6 @@ Tsnax
 Tspan13
 Tspan18
 Tspan32
-Tspan7
 Tspan9
 Tspoap1
 Tst
@@ -3595,9 +3508,7 @@ Ttll1
 Ttll10
 Ttll4
 Ttll6
-Ttyh3
 Tuba8
-Tubal3
 Tubb2a
 Tube1
 Tubgcp4
@@ -3607,7 +3518,6 @@ Tulp3
 Tulp4
 Twf1
 Twist1
-Txlna
 Txndc11
 Txndc5
 Txnip
@@ -3672,7 +3582,6 @@ Uqcc3
 Urm1
 Ush1c
 Usp1
-Usp11
 Usp12
 Usp15
 Usp16
@@ -3684,7 +3593,6 @@ Usp30
 Usp31
 Usp32
 Usp33
-Usp37
 Usp38
 Usp42
 Usp45
@@ -3764,14 +3672,11 @@ Wnt10b
 Wnt2b
 Wnt3a
 Wnt4
-Wnt6
 Wrap53
-Wrn
 Wsb2
 Wwc2
 Xbp1
 Xkr4
-Xkr5
 Xpnpep1
 Xpo1
 Xpo5
@@ -3832,6 +3737,7 @@ Zfp260
 Zfp266
 Zfp280d
 Zfp281
+Zfp334
 Zfp341
 Zfp407
 Zfp414
@@ -3892,4 +3798,3 @@ Zswim6
 Zwilch
 Zwint
 Zzef1
-Zzz3

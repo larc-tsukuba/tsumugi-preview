@@ -7,7 +7,7 @@
 */
 function formatPhenotypesWithHighlight(phenotypes, target_phenotype) {
     if (!target_phenotype) {
-        return phenotypes.map((anno) => "- " + anno).join("<br>");
+        return phenotypes.map((anno) => "・ " + anno).join("<br>");
     }
 
     const matching = [];
@@ -26,9 +26,9 @@ function formatPhenotypesWithHighlight(phenotypes, target_phenotype) {
     return ordered
         .map((phenotype) => {
             if (phenotype.startsWith(target_phenotype)) {
-                return `🚩 ${phenotype}`;
+                return `▶ ${phenotype}`;
             } else {
-                return "- " + phenotype;
+                return "・ " + phenotype;
             }
         })
         .join("<br>");
@@ -66,7 +66,7 @@ function createTooltip(
         // Append the associated human diseases section when data is available
         if (diseases && diseases.length > 0 && diseases[0] !== "") {
             tooltipText += `<br><br><b>Associated Human Diseases</b><br>`;
-            tooltipText += diseases.map((disease) => "- " + disease).join("<br>");
+            tooltipText += diseases.map((disease) => "・ " + disease).join("<br>");
         }
         pos = event.target.renderedPosition();
     } else if (event.target.isEdge()) {
@@ -153,8 +153,6 @@ export function showTooltip(
     target_phenotype = null,
     nodeColorMin,
     nodeColorMax,
-    edgeMin,
-    edgeMax,
     nodeSizes,
 ) {
     removeTooltips();
@@ -188,4 +186,91 @@ export function showTooltip(
 
 export function removeTooltips() {
     document.querySelectorAll(".cy-tooltip").forEach((el) => el.remove());
+}
+
+/**
+ * Creates a reusable custom tooltip. Position is given in rendered coordinates relative to the Cytoscape container.
+ */
+export function showCustomTooltip({ content, position, containerSelector = ".cy" }) {
+    removeTooltips();
+
+    const tooltip = document.createElement("div");
+    tooltip.classList.add("cy-tooltip");
+    tooltip.innerHTML = content;
+    Object.assign(tooltip.style, {
+        position: "absolute",
+        left: `${position.x + 10}px`,
+        top: `${position.y + 10}px`,
+        padding: "5px",
+        background: "white",
+        border: "1px solid #ccc",
+        borderRadius: "5px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+        zIndex: "1000",
+        cursor: "move",
+        userSelect: "text",
+        maxWidth: "320px",
+    });
+
+    const container = document.querySelector(containerSelector);
+    if (!container) {
+        console.warn(`Container "${containerSelector}" not found; tooltip not rendered.`);
+        return;
+    }
+
+    container.appendChild(tooltip);
+    enableTooltipDrag(tooltip);
+}
+
+/**
+ * Shared tooltip for modules (connected components)
+ */
+export function showSubnetworkTooltip({ component, renderedPos, containerSelector = ".cy" }) {
+    if (!component) return;
+
+    const lines =
+        component.phenotypes && component.phenotypes.length > 0
+            ? component.phenotypes.map(([name, count]) => `・ ${name} (${count})`)
+            : ["No shared phenotypes on visible edges."];
+
+    const infoIcon = `
+        <div class="info-tooltip-container">
+            <div class="info-tooltip-icon" aria-label="Tooltip: shared phenotype counts">i</div>
+            <div class="info-tooltip-content">
+                The number in parentheses indicates the count of shared phenotypes within the module.
+            </div>
+        </div>
+    `;
+
+    const header = `<div style="display: flex; align-items: center; gap: 6px;"><b>Phenotypes shared in Module ${component.id}</b>${infoIcon}</div>`;
+    const tooltipContent = `${header}${lines.join("<br>")}`;
+    const anchor =
+        renderedPos ||
+        {
+            x: (component.bbox.x1 + component.bbox.x2) / 2,
+            y: (component.bbox.y1 + component.bbox.y2) / 2,
+        };
+
+    showCustomTooltip({ content: tooltipContent, position: anchor, containerSelector });
+
+    // Enable click-to-toggle for dynamically created info icons (for touch devices)
+    const tooltipEl = document.querySelector(".cy-tooltip");
+    if (tooltipEl) {
+        const tooltipIcons = tooltipEl.querySelectorAll(".info-tooltip-icon");
+        tooltipIcons.forEach((icon) => {
+            icon.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const container = this.parentElement;
+                container.classList.toggle("active");
+
+                tooltipEl.querySelectorAll(".info-tooltip-container.active").forEach((el) => {
+                    if (el !== container) {
+                        el.classList.remove("active");
+                    }
+                });
+            });
+        });
+    }
 }
