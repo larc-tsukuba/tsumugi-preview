@@ -53,6 +53,7 @@ a {
     box-sizing: border-box;
     align-items: stretch;
     display: flex;
+    position: relative;
 }
 
 /* ======================================================== */
@@ -77,7 +78,59 @@ a {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     background-color: white;
+}
+
+/* Panel toggle buttons */
+.panel-toggle-button {
+    position: absolute;
+    top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #aaa;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+    z-index: 1200;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.panel-toggle-button:hover {
+    background-color: #ffeddc;
+    color: #d65f00;
+}
+
+.panel-toggle-button i {
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+
+.panel-toggle-button.collapsed i {
+    transform: rotate(180deg);
+}
+
+.left-panel-toggle {
+    left: 10px;
+}
+
+.right-panel-toggle {
+    right: 10px;
+}
+
+.body-container.left-panel-hidden .left-control-panel-container {
+    display: none;
+}
+
+.body-container.right-panel-hidden .right-control-panel-container {
+    display: none;
 }
 
 .panel-section {
@@ -85,11 +138,18 @@ a {
     background-color: #fff;
     padding-bottom: 10px;
     border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .panel-section:first-child {
     border-top: none;
     margin-top: 0;
+}
+
+.right-control-panel-container .boxed-section {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .panel-title {
@@ -114,6 +174,7 @@ a {
     justify-content: center;
     border: 2px solid #aaa;
     border-radius: 10px;
+    min-width: 0; /* allow shrinking back after expanding */
 }
 
 .cy {
@@ -451,6 +512,40 @@ ul.suggestions li:hover {
     margin-top: 10px;
 }
 
+.export-scale-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 12px auto;
+    flex-wrap: wrap;
+}
+
+.export-scale-control label {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+}
+
+.export-scale-control input {
+    width: 130px;
+    padding: 8px 10px;
+    border: 2px solid #aaa;
+    border-radius: 8px;
+    font-size: 0.95em;
+    box-sizing: border-box;
+}
+
+.export-scale-hint {
+    font-weight: normal;
+    color: #666;
+    font-size: 0.9em;
+}
+
 .mobile-exporter {
     display: none;
 }
@@ -712,6 +807,83 @@ button.menu-toggle-icon {
         margin: 12px 0;
         flex-wrap: wrap;
     }
+
+    .panel-toggle-button {
+        display: none;
+    }
+}
+
+/* ======================================================== */
+/* Cytoscape Tooltip Styles */
+/* ======================================================== */
+.cy-tooltip {
+    position: absolute;
+    --cy-tooltip-phenotypes-max: 120px;
+    --cy-tooltip-diseases-max: 90px;
+    --cy-tooltip-modules-max: 160px;
+    --cy-tooltip-height: 220px;
+    min-width: 220px;
+    min-height: 140px;
+    box-sizing: border-box;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cy-tooltip__section {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px; /* leave space for scrollbar */
+}
+
+.cy-tooltip__section--phenotypes {
+    max-height: var(--cy-tooltip-phenotypes-max);
+}
+
+.cy-tooltip__section--diseases {
+    max-height: var(--cy-tooltip-diseases-max);
+}
+
+.cy-tooltip__section--modules {
+    max-height: var(--cy-tooltip-modules-max);
+}
+
+.cy-tooltip__section-title {
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.cy-tooltip__section-body {
+    line-height: 1.4;
+}
+
+.cy-tooltip__resize-handle {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    cursor: sw-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: none;
+}
+
+.cy-tooltip__resize-handle::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-left: 2px solid #999;
+    border-bottom: 2px solid #999;
+    transform: translate(-1px, 1px);
 }
 
 /* ======================================================== */

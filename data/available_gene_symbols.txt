@@ -63,7 +63,6 @@ Acp2
 Acsf2
 Acsl4
 Acsl5
-Acsm1
 Actg1
 Actl6a
 Actr5
@@ -1039,7 +1038,6 @@ Ecrg4
 Ecscr
 Ect2
 Edc3
-Eddm3b
 Edem1
 Edem3
 Eea1
@@ -2104,7 +2102,6 @@ Mtmr11
 Mtmr14
 Mtmr2
 Mtmr3
-Mtmr6
 Mtor
 Mtpap
 Mturn
@@ -2933,6 +2930,7 @@ Selenok
 Selenot
 Sema3f
 Sema4d
+Sema5b
 Senp1
 Sephs2
 Sepsecs
@@ -3673,6 +3671,7 @@ Wnt2b
 Wnt3a
 Wnt4
 Wrap53
+Wrnip1
 Wsb2
 Wwc2
 Xbp1
