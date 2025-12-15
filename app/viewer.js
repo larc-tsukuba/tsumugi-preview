@@ -77,10 +77,9 @@ async function fetchText(path) {
             }
         }
     } catch (error) {
-        // Intentionally fall through to the XHR fallback
+        // fall through to the XHR fallback
     }
 
-    // Fallback for file:// protocol or environments blocking fetch
     return new Promise((resolve) => {
         try {
             const xhr = new XMLHttpRequest();
@@ -109,9 +108,7 @@ async function setVersionLabel() {
 
     for (const path of candidates) {
         versionText = await fetchText(path);
-        if (versionText) {
-            break;
-        }
+        if (versionText) break;
     }
 
     versionLabel.textContent = versionText || "-";
