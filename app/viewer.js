@@ -361,6 +361,18 @@ const cy = cytoscape({
             },
         },
         {
+            selector: "node.focus-node",
+            style: {
+                opacity: 1,
+            },
+        },
+        {
+            selector: "edge.focus-edge",
+            style: {
+                opacity: 1,
+            },
+        },
+        {
             selector: ".disease-highlight",
             style: {
                 "border-width": 5,
@@ -383,6 +395,9 @@ const cy = cytoscape({
         },
     ],
     layout: getLayoutOptions(),
+    userZoomingEnabled: true,
+    zoomingEnabled: true,
+    wheelSensitivity: 0.2,
 });
 
 window.cy = cy;
@@ -390,6 +405,28 @@ window.cy = cy;
 const bodyContainer = document.querySelector(".body-container");
 const leftPanelToggleButton = document.getElementById("toggle-left-panel");
 const rightPanelToggleButton = document.getElementById("toggle-right-panel");
+
+// Smooth wheel zoom on the Cytoscape canvas
+const cyContainer = cy.container();
+if (cyContainer) {
+    cyContainer.addEventListener(
+        "wheel",
+        (event) => {
+            event.preventDefault();
+            const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+            const rect = cyContainer.getBoundingClientRect();
+            const renderedPosition = {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top,
+            };
+            const targetZoom = cy.zoom() * zoomFactor;
+            const clampedZoom = Math.min(cy.maxZoom(), Math.max(cy.minZoom(), targetZoom));
+            cy.zoom({ level: clampedZoom, renderedPosition });
+            scheduleSubnetworkFrameUpdate();
+        },
+        { passive: false },
+    );
+}
 
 function resetPanelStatesForMobile() {
     if (!bodyContainer) return;
@@ -447,9 +484,9 @@ const subnetworkOverlay = createSubnetworkOverlay();
 let subnetworkMeta = [];
 let isFrameUpdateQueued = false;
 let subnetworkDragState = null;
-const COMPONENT_PADDING = 60;
-const COMPONENT_MAX_ITER = 12;
-const COMPONENT_FIT_PADDING = 80;
+const COMPONENT_PADDING = 16;
+const COMPONENT_MAX_ITER = 30;
+const COMPONENT_FIT_PADDING = 40;
 
 function createSubnetworkOverlay() {
     const cyContainer = document.querySelector(".cy");
@@ -576,9 +613,10 @@ function translateComponent(comp, dx, dy) {
 
 function resolveComponentOverlaps() {
     const components = cy.elements(":visible").components().filter((comp) => comp.nodes().length > 0);
-    if (components.length <= 1) return;
+    if (components.length <= 1) return false;
 
     const zoom = cy.zoom() || 1;
+    let movedAny = false;
 
     for (let iter = 0; iter < COMPONENT_MAX_ITER; iter++) {
         let moved = false;
@@ -622,12 +660,47 @@ function resolveComponentOverlaps() {
 
                 translateComponent(components[j], shiftX / zoom, shiftY / zoom);
                 moved = true;
+                movedAny = true;
             }
         }
         if (!moved) {
             break;
         }
     }
+
+    return movedAny;
+}
+
+function tileComponents() {
+    const components = cy.elements(":visible").components().filter((comp) => comp.nodes().length > 0);
+    if (components.length === 0) return false;
+
+    const bboxes = components.map((comp) => comp.boundingBox({ includeLabels: true, includeOverlays: false }));
+    const maxW = Math.max(...bboxes.map((b) => b.w));
+    const maxH = Math.max(...bboxes.map((b) => b.h));
+    const tilePadding = COMPONENT_PADDING;
+    const tileW = maxW + tilePadding * 2;
+    const tileH = maxH + tilePadding * 2;
+    const cols = Math.max(1, Math.ceil(Math.sqrt(components.length)));
+
+    components.forEach((comp, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const targetCenter = {
+            x: col * tileW + tileW / 2,
+            y: row * tileH + tileH / 2,
+        };
+
+        const bbox = bboxes[idx];
+        const compCenter = {
+            x: (bbox.x1 + bbox.x2) / 2,
+            y: (bbox.y1 + bbox.y2) / 2,
+        };
+
+        translateComponent(comp, targetCenter.x - compCenter.x, targetCenter.y - compCenter.y);
+    });
+
+    return true;
 }
 
 function fitVisibleComponents() {
@@ -1144,10 +1217,19 @@ createSlider("edge-width-slider", 5, 1, 10, 1, (intValues) => {
 
 const layoutDropdown = document.getElementById("layout-dropdown");
 const nodeRepulsionContainer = document.getElementById("node-repulsion-container");
+const nodeRepulsionBox = document.getElementById("node-repulsion-box");
 
 function updateNodeRepulsionVisibility() {
     const selectedLayout = layoutDropdown.value;
-    nodeRepulsionContainer.style.display = selectedLayout === "cose" ? "block" : "none";
+    const displayValue = selectedLayout === "cose" ? "block" : "none";
+
+    if (nodeRepulsionContainer) {
+        nodeRepulsionContainer.style.display = displayValue;
+    }
+
+    if (nodeRepulsionBox) {
+        nodeRepulsionBox.style.display = displayValue;
+    }
 }
 
 updateNodeRepulsionVisibility();
@@ -1173,10 +1255,14 @@ window.recalculateCentrality = recalculateCentrality;
 
 const DIM_NODE_CLASS = "dim-node";
 const DIM_EDGE_CLASS = "dim-edge";
+const FOCUS_NODE_CLASS = "focus-node";
+const FOCUS_EDGE_CLASS = "focus-edge";
 
 function clearNeighborHighlights() {
     cy.nodes().removeClass(DIM_NODE_CLASS);
     cy.edges().removeClass(DIM_EDGE_CLASS);
+    cy.nodes().removeClass(FOCUS_NODE_CLASS);
+    cy.edges().removeClass(FOCUS_EDGE_CLASS);
 }
 
 function highlightNeighbors(target) {
@@ -1189,27 +1275,44 @@ function highlightNeighbors(target) {
     let highlightElements;
 
     if (target.isNode()) {
-        highlightElements = target.closedNeighborhood().filter(":visible");
+        const nodeId = target.id();
+        const neighborIds = new Set([nodeId]);
+
+        // Collect neighbor node ids from visible edges incident to the clicked node
+        target.connectedEdges().forEach((edge) => {
+            if (!edge.visible()) return;
+            const srcId = edge.source().id();
+            const tgtId = edge.target().id();
+            if (srcId === nodeId) {
+                neighborIds.add(tgtId);
+            }
+            if (tgtId === nodeId) {
+                neighborIds.add(srcId);
+            }
+        });
+
+        const highlightNodes = cy.nodes().filter((n) => n.visible() && neighborIds.has(n.id()));
+        const highlightEdges = cy
+            .edges()
+            .filter((e) => e.visible() && (e.source().id() === nodeId || e.target().id() === nodeId));
+
+        highlightElements = highlightNodes.union(highlightEdges);
     } else if (target.isEdge()) {
-        highlightElements = target.union(target.connectedNodes()).filter(":visible");
+        highlightElements = target.union(target.connectedNodes()).filter((ele) => ele.visible());
     } else {
         return;
     }
 
-    // Get all visible connected components
-    const visibleElements = cy.elements(":visible");
-    const components = visibleElements.components();
+    // Dim all visible elements first, then un-dim the highlight set to ensure neighbors stay emphasized
+    const visibleElements = cy.elements().filter((ele) => ele.visible());
+    visibleElements.nodes().addClass(DIM_NODE_CLASS);
+    visibleElements.edges().addClass(DIM_EDGE_CLASS);
 
-    // Find the component that contains the clicked target
-    const component = components.find((comp) => comp.contains(target));
-
-    if (component) {
-        // Elements to dim are those in the component but not in the highlight set
-        const elementsToDim = component.not(highlightElements);
-
-        elementsToDim.nodes().addClass(DIM_NODE_CLASS);
-        elementsToDim.edges().addClass(DIM_EDGE_CLASS);
-    }
+    // Remove dimming from the intended highlight set
+    highlightElements.nodes().removeClass(DIM_NODE_CLASS);
+    highlightElements.edges().removeClass(DIM_EDGE_CLASS);
+    highlightElements.nodes().addClass(FOCUS_NODE_CLASS);
+    highlightElements.edges().addClass(FOCUS_EDGE_CLASS);
 }
 
 cy.on("tap", "node, edge", function (event) {
@@ -1280,4 +1383,19 @@ if (recenterBtn) {
             scheduleSubnetworkFrameUpdate();
         }
     });
+}
+
+function autoArrangeModules() {
+    if (!cy) return;
+    cy.startBatch();
+    tileComponents();
+    resolveComponentOverlaps();
+    cy.endBatch();
+    fitVisibleComponents();
+    scheduleSubnetworkFrameUpdate();
+}
+
+const arrangeModulesButton = document.getElementById("arrange-modules-button");
+if (arrangeModulesButton) {
+    arrangeModulesButton.addEventListener("click", autoArrangeModules);
 }
