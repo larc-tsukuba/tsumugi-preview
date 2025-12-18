@@ -13,7 +13,6 @@
 4931422A03Rik
 4933402N03Rik
 4933427D14Rik
-4933428G20Rik
 4933434E20Rik
 6430548M08Rik
 A1cf
@@ -64,7 +63,6 @@ Acp2
 Acsf2
 Acsl4
 Acsl5
-Acsm1
 Actg1
 Actl6a
 Actr5
@@ -257,7 +255,6 @@ Arih1
 Arih2
 Arl10
 Arl15
-Arl4d
 Arl5c
 Arl6ip1
 Armc2
@@ -2106,7 +2103,6 @@ Mtmr11
 Mtmr14
 Mtmr2
 Mtmr3
-Mtmr6
 Mtor
 Mtpap
 Mturn
@@ -3379,6 +3375,7 @@ Tmem225
 Tmem237
 Tmem240
 Tmem248
+Tmem255b
 Tmem256
 Tmem260
 Tmem38b
@@ -3586,7 +3583,6 @@ Ush1c
 Usp1
 Usp12
 Usp15
-Usp16
 Usp19
 Usp21
 Usp22
@@ -3739,6 +3735,7 @@ Zfp260
 Zfp266
 Zfp280d
 Zfp281
+Zfp334
 Zfp341
 Zfp407
 Zfp414
