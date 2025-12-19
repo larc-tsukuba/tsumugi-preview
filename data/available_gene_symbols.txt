@@ -63,7 +63,6 @@ Acp2
 Acsf2
 Acsl4
 Acsl5
-Acsm1
 Actg1
 Actl6a
 Actr5
@@ -256,6 +255,7 @@ Arih1
 Arih2
 Arl10
 Arl15
+Arl4d
 Arl5c
 Arl6ip1
 Armc2
@@ -2104,7 +2104,6 @@ Mtmr11
 Mtmr14
 Mtmr2
 Mtmr3
-Mtmr6
 Mtor
 Mtpap
 Mturn
@@ -3584,6 +3583,7 @@ Ush1c
 Usp1
 Usp12
 Usp15
+Usp16
 Usp19
 Usp21
 Usp22
