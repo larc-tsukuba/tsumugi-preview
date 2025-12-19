@@ -62,12 +62,17 @@ function isBinaryPhenotypeElements(elements) {
     return false;
 }
 
-function setPageTitle(config, mapSymbolToId) {
+function setPageTitle(config, mapSymbolToId, mapPhenotypeToId) {
     const pageTitleLink = document.getElementById("page-title-link");
     const pageTitle = config.displayName || config.name || "TSUMUGI";
     let targetUrl = "";
 
-    if (config.mode === "genesymbol" && mapSymbolToId) {
+    if (config.mode === "phenotype" && mapPhenotypeToId) {
+        const phenotypeId = mapPhenotypeToId[config.name];
+        if (phenotypeId) {
+            targetUrl = `https://www.mousephenotype.org/data/phenotypes/${phenotypeId}`;
+        }
+    } else if (config.mode === "genesymbol" && mapSymbolToId) {
         const accession = mapSymbolToId[config.name];
         if (accession) {
             targetUrl = `https://www.mousephenotype.org/data/genes/${accession}`;
@@ -78,6 +83,8 @@ function setPageTitle(config, mapSymbolToId) {
         pageTitleLink.href = targetUrl;
         pageTitleLink.target = "_blank";
         pageTitleLink.rel = "noreferrer";
+        pageTitleLink.style.pointerEvents = "";
+        pageTitleLink.style.cursor = "";
     } else {
         pageTitleLink.removeAttribute("href");
         pageTitleLink.style.pointerEvents = "none";
@@ -236,7 +243,8 @@ const isGeneSymbolPage = pageConfig.mode === "genesymbol";
 setVersionLabel();
 
 const map_symbol_to_id = loadJSON("../data/marker_symbol_accession_id.json") || {};
-setPageTitle(pageConfig, map_symbol_to_id);
+const map_phenotype_to_id = loadJSON("../data/mp_term_id_lookup.json") || {};
+setPageTitle(pageConfig, map_symbol_to_id, map_phenotype_to_id);
 
 const elements = loadElementsForConfig(pageConfig);
 if (!elements || elements.length === 0) {
@@ -1179,9 +1187,62 @@ function applyFiltering() {
     }
 }
 
-document.getElementById("genotype-filter-form").addEventListener("change", applyFiltering);
-document.getElementById("sex-filter-form").addEventListener("change", applyFiltering);
-document.getElementById("lifestage-filter-form").addEventListener("change", applyFiltering);
+function setupAllToggle(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"]'));
+    const allCheckbox = checkboxes.find((checkbox) => checkbox.value === "All");
+    const optionCheckboxes = checkboxes.filter((checkbox) => checkbox !== allCheckbox);
+
+    const ensureAllSelected = () => {
+        if (allCheckbox) {
+            allCheckbox.checked = true;
+            optionCheckboxes.forEach((checkbox) => {
+                checkbox.checked = false;
+            });
+        }
+    };
+
+    if (allCheckbox) {
+        allCheckbox.addEventListener("change", () => {
+            if (allCheckbox.checked) {
+                optionCheckboxes.forEach((checkbox) => {
+                    checkbox.checked = false;
+                });
+            } else if (!optionCheckboxes.some((checkbox) => checkbox.checked)) {
+                ensureAllSelected();
+            }
+            applyFiltering();
+        });
+    }
+
+    optionCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+            if (checkbox.checked) {
+                if (allCheckbox) {
+                    allCheckbox.checked = false;
+                }
+                if (optionCheckboxes.every((option) => option.checked)) {
+                    ensureAllSelected();
+                    applyFiltering();
+                    return;
+                }
+            } else if (!optionCheckboxes.some((option) => option.checked)) {
+                ensureAllSelected();
+                applyFiltering();
+                return;
+            }
+            applyFiltering();
+        });
+    });
+
+    if (!optionCheckboxes.some((checkbox) => checkbox.checked)) {
+        ensureAllSelected();
+    }
+}
+
+["genotype-filter-form", "sex-filter-form", "lifestage-filter-form"].forEach((formId) => setupAllToggle(formId));
 
 // =============================================================================
 // Highlight human disease annotations
@@ -1278,7 +1339,6 @@ function highlightNeighbors(target) {
         const nodeId = target.id();
         const neighborIds = new Set([nodeId]);
 
-        // Collect neighbor node ids from visible edges incident to the clicked node
         target.connectedEdges().forEach((edge) => {
             if (!edge.visible()) return;
             const srcId = edge.source().id();

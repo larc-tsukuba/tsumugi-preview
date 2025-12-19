@@ -3493,7 +3493,6 @@ Tsnax
 Tspan13
 Tspan18
 Tspan32
-Tspan7
 Tspan9
 Tspoap1
 Tst
@@ -3585,7 +3584,6 @@ Ush1c
 Usp1
 Usp12
 Usp15
-Usp16
 Usp19
 Usp21
 Usp22
