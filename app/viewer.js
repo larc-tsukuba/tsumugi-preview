@@ -1,14 +1,27 @@
-import { exportGraphAsPNG, exportGraphAsJPG, exportGraphAsCSV, exportGraphAsGraphML, exportGraphAsSVG } from "./js/exporter.js";
-import { scaleToOriginalRange, getColorForValue } from "./js/value_scaler.js";
-import { removeTooltips, showSubnetworkTooltip, showTooltip } from "./js/tooltips.js";
-import { getOrderedComponents, calculateConnectedComponents } from "./js/components.js";
-import { createSlider } from "./js/slider.js";
-import { filterElementsByGenotypeAndSex } from "./js/filters.js";
-import { loadJSONGz, loadJSON } from "./js/data_loader.js";
-import { setupGeneSearch } from "./js/gene_searcher.js";
-import { highlightDiseaseAnnotation } from "./js/highlighter.js";
-import { setupPhenotypeSearch } from "./js/phenotype_searcher.js";
-import { initializeCentralitySystem, recalculateCentrality } from "./js/centrality.js";
+import { exportGraphAsPNG, exportGraphAsJPG, exportGraphAsCSV, exportGraphAsGraphML, exportGraphAsSVG } from "./js/export/graphExporter.js";
+import { scaleToOriginalRange, getColorForValue } from "./js/graph/valueScaler.js";
+import { initInfoTooltips, removeTooltips, showSubnetworkTooltip, showTooltip } from "./js/ui/tooltips.js";
+import { getOrderedComponents, calculateConnectedComponents } from "./js/graph/components.js";
+import { createSlider } from "./js/ui/slider.js";
+import { filterElementsByGenotypeAndSex } from "./js/graph/filters.js";
+import { loadJSON } from "./js/data/dataLoader.js";
+import {
+    applyNodeMinMax,
+    getPageConfig,
+    hidePhenotypeOnlySections,
+    isBinaryPhenotypeElements,
+    loadElementsForConfig,
+    renderEmptyState,
+    setPageTitle,
+    setVersionLabel,
+} from "./js/viewer/pageSetup.js";
+import { createLayoutController } from "./js/graph/layoutController.js";
+import { setupGeneSearch } from "./js/search/geneSearcher.js";
+import { highlightDiseaseAnnotation } from "./js/graph/highlighter.js";
+import { setupPhenotypeSearch } from "./js/search/phenotypeSearcher.js";
+import { initializeCentralitySystem, recalculateCentrality } from "./js/graph/centrality.js";
+import { initDynamicFontSize } from "./js/ui/dynamicFontSize.js";
+import { initMobilePanel } from "./js/ui/mobilePanel.js";
 
 if (window.cytoscape && window.cytoscapeSvg && typeof window.cytoscape.use === "function") {
     window.cytoscape.use(window.cytoscapeSvg);
@@ -18,222 +31,16 @@ const NODE_SLIDER_MIN = 1;
 const NODE_SLIDER_MAX = 100;
 const EDGE_SLIDER_MIN = 1;
 const EDGE_SLIDER_MAX = 100;
+const AUTO_ARRANGE_DELAY_MS = 150;
+const AUTO_ARRANGE_LAYOUT_TIMEOUT_MS = 4000;
+const AUTO_ARRANGE_REPULSION_TIMEOUT_MS = 2000;
+const INITIAL_AUTO_ARRANGE_TIMEOUT_MS = 15000;
+const REPULSION_FINISH_EVENT = "tsumugi:repulsion:finish";
 
-function getPageConfig() {
-    const params = new URLSearchParams(window.location.search);
-    const modeParam = params.get("mode");
-    const mode = ["phenotype", "genesymbol", "genelist"].includes(modeParam || "") ? modeParam : "phenotype";
-    const providedName = params.get("name") || "";
-    const name = mode === "genelist" && !providedName ? "geneList" : providedName;
-    const title = params.get("title") || name;
-
-    return {
-        mode,
-        name,
-        displayName: title || name || "TSUMUGI",
-    };
-}
-
-function hidePhenotypeOnlySections(isPhenotypePage) {
-    document.querySelectorAll(".phenotype-only").forEach((el) => {
-        el.style.display = isPhenotypePage ? "" : "none";
-    });
-}
-
-function isBinaryPhenotypeElements(elements) {
-    const nodeElements = elements.filter((ele) => ele.data && ele.data.node_color !== undefined);
-    if (!nodeElements.length) {
-        return false;
-    }
-
-    const hideSeverityFlags = nodeElements
-        .map((ele) => ele.data.hide_severity)
-        .filter((value) => value !== undefined);
-    if (hideSeverityFlags.length && hideSeverityFlags.every(Boolean)) {
-        return true;
-    }
-
-    const uniqueColors = [...new Set(nodeElements.map((ele) => ele.data.node_color).filter((v) => v !== undefined))];
-    if (uniqueColors.length === 1) {
-        const normalized = String(Math.round(Number(uniqueColors[0])));
-        return ["0", "1", "100"].includes(normalized);
-    }
-
-    return false;
-}
-
-function setPageTitle(config, mapSymbolToId, mapPhenotypeToId) {
-    const pageTitleLink = document.getElementById("page-title-link");
-    const pageTitle = config.displayName || config.name || "TSUMUGI";
-    let targetUrl = "";
-
-    if (config.mode === "phenotype" && mapPhenotypeToId) {
-        const phenotypeId = mapPhenotypeToId[config.name];
-        if (phenotypeId) {
-            targetUrl = `https://www.mousephenotype.org/data/phenotypes/${phenotypeId}`;
-        }
-    } else if (config.mode === "genesymbol" && mapSymbolToId) {
-        const accession = mapSymbolToId[config.name];
-        if (accession) {
-            targetUrl = `https://www.mousephenotype.org/data/genes/${accession}`;
-        }
-    }
-
-    if (targetUrl) {
-        pageTitleLink.href = targetUrl;
-        pageTitleLink.target = "_blank";
-        pageTitleLink.rel = "noreferrer";
-        pageTitleLink.style.pointerEvents = "";
-        pageTitleLink.style.cursor = "";
-    } else {
-        pageTitleLink.removeAttribute("href");
-        pageTitleLink.style.pointerEvents = "none";
-        pageTitleLink.style.cursor = "default";
-    }
-
-    pageTitleLink.textContent = pageTitle;
-    document.title = `${pageTitle} | TSUMUGI`;
-}
-
-async function fetchText(path) {
-    let text = "";
-    try {
-        const response = await fetch(path, { cache: "no-cache" });
-        if (response.ok || response.status === 0) {
-            text = (await response.text()).trim();
-            if (text) {
-                return text;
-            }
-        }
-    } catch (error) {
-        // fall through to the XHR fallback
-    }
-
-    return new Promise((resolve) => {
-        try {
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", path, true);
-            xhr.onload = () => {
-                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)) {
-                    resolve(xhr.responseText.trim());
-                } else {
-                    resolve("");
-                }
-            };
-            xhr.onerror = () => resolve("");
-            xhr.send();
-        } catch (e) {
-            resolve("");
-        }
-    });
-}
-
-async function setVersionLabel() {
-    const versionLabel = document.getElementById("tsumugi-version");
-    if (!versionLabel) return;
-
-    const candidates = ["../version.txt", "./version.txt"];
-    let versionText = "";
-
-    for (const path of candidates) {
-        versionText = await fetchText(path);
-        if (versionText) break;
-    }
-
-    versionLabel.textContent = versionText || "-";
-}
-
-function loadElementsForConfig(config) {
-    if (config.mode === "phenotype") {
-        return loadJSONGz(`../data/phenotype/${config.name}.json.gz`) || [];
-    }
-
-    if (config.mode === "genesymbol") {
-        return loadJSONGz(`../data/genesymbol/${config.name}.json.gz`) || [];
-    }
-
-    // Gene list page pulls data from localStorage
-    try {
-        const stored = localStorage.getItem("elements");
-        return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-        console.error("Failed to parse stored elements for gene list:", error);
-        return [];
-    }
-}
-
-function renderEmptyState(message) {
-    const container = document.querySelector(".cy");
-    if (!container) return;
-
-    container.innerHTML = `<div style="padding: 24px; font-size: 16px;">${message}</div>`;
-}
-
-function applyNodeMinMax(elements, nodeColorMin, nodeColorMax) {
-    // Ensure at least one gene pair remains visible even at slider extremes. Issue #72
-    const nodeColorMap = new Map();
-    elements.forEach((ele) => {
-        if (ele.data.node_color !== undefined && ele.data.id !== undefined) {
-            nodeColorMap.set(ele.data.id, ele.data.node_color);
-        }
-    });
-
-    const sortedNodeColors = [...new Set([...nodeColorMap.values()])].sort((a, b) => a - b);
-    if (sortedNodeColors.length === 0) {
-        return { nodeMin: nodeColorMin, nodeMax: nodeColorMax };
-    }
-
-    const nodeColorToRank = new Map();
-    sortedNodeColors.forEach((val, idx) => {
-        nodeColorToRank.set(val, idx + 1);
-    });
-
-    const edgeRankPairs = [];
-    elements.forEach((ele) => {
-        if (ele.data.source && ele.data.target) {
-            const sourceVal = nodeColorMap.get(ele.data.source);
-            const targetVal = nodeColorMap.get(ele.data.target);
-
-            if (sourceVal !== undefined && targetVal !== undefined) {
-                const sourceRank = nodeColorToRank.get(sourceVal);
-                const targetRank = nodeColorToRank.get(targetVal);
-                const rankSum = sourceRank + targetRank;
-
-                edgeRankPairs.push({
-                    rankSum: rankSum,
-                    minVal: Math.min(sourceVal, targetVal),
-                    maxVal: Math.max(sourceVal, targetVal),
-                });
-            }
-        }
-    });
-
-    if (edgeRankPairs.length === 0) {
-        return { nodeMin: nodeColorMin, nodeMax: nodeColorMax };
-    }
-
-    const minRankEdge = edgeRankPairs.reduce((a, b) => (a.rankSum < b.rankSum ? a : b));
-    const maxRankEdge = edgeRankPairs.reduce((a, b) => (a.rankSum > b.rankSum ? a : b));
-
-    const nodeMin = minRankEdge.maxVal;
-    const nodeMax = maxRankEdge.minVal;
-
-    elements.forEach((ele) => {
-        if (ele.data.node_color !== undefined) {
-            ele.data.original_node_color = ele.data.node_color;
-
-            if (ele.data.node_color <= nodeMin) {
-                ele.data.node_color_for_filter = nodeMin;
-            } else if (ele.data.node_color >= nodeMax) {
-                ele.data.node_color_for_filter = nodeMax;
-            } else {
-                ele.data.node_color_for_filter = ele.data.node_color;
-            }
-        }
-    });
-
-    return { nodeMin, nodeMax };
-}
+// Initialize UI helpers that only depend on DOM availability.
+initInfoTooltips();
+initDynamicFontSize();
+initMobilePanel();
 
 // Track which search mode is active in this viewer
 const pageConfig = getPageConfig();
@@ -242,9 +49,9 @@ const isGeneSymbolPage = pageConfig.mode === "genesymbol";
 
 setVersionLabel();
 
-const map_symbol_to_id = loadJSON("../data/marker_symbol_accession_id.json") || {};
-const map_phenotype_to_id = loadJSON("../data/mp_term_id_lookup.json") || {};
-setPageTitle(pageConfig, map_symbol_to_id, map_phenotype_to_id);
+const mapSymbolToId = loadJSON("../data/marker_symbol_accession_id.json") || {};
+const mapPhenotypeToId = loadJSON("../data/mp_term_id_lookup.json") || {};
+setPageTitle(pageConfig, mapSymbolToId, mapPhenotypeToId);
 
 const elements = loadElementsForConfig(pageConfig);
 if (!elements || elements.length === 0) {
@@ -259,9 +66,11 @@ hidePhenotypeOnlySections(isPhenotypePage && !isBinaryPhenotype);
 // Input handler
 // ############################################################################
 
-const nodeSizes = elements.filter((ele) => ele.data.node_color !== undefined).map((ele) => ele.data.node_color);
-const nodeColorMin = nodeSizes.length ? Math.min(...nodeSizes) : 0;
-const nodeColorMax = nodeSizes.length ? Math.max(...nodeSizes) : 1;
+const nodeColorValues = elements
+    .filter((ele) => ele.data.node_color !== undefined)
+    .map((ele) => ele.data.node_color);
+const nodeColorMin = nodeColorValues.length ? Math.min(...nodeColorValues) : 0;
+const nodeColorMax = nodeColorValues.length ? Math.max(...nodeColorValues) : 1;
 
 let nodeMin = nodeColorMin;
 let nodeMax = nodeColorMax;
@@ -288,44 +97,11 @@ function mapEdgeSizeToWidth(edgeSize) {
 // Initialize Cytoscape
 // ############################################################################
 
-let currentLayout = "cose";
-
-const nodeRepulsionMin = 1;
-const nodeRepulsionMax = 10000;
-const componentSpacingMin = 1;
-const componentSpacingMax = 200;
-
 const defaultNodeRepulsion = isGeneSymbolPage ? 8 : 5;
-
-let nodeRepulsionValue = scaleToOriginalRange(defaultNodeRepulsion, nodeRepulsionMin, nodeRepulsionMax);
-let componentSpacingValue = scaleToOriginalRange(defaultNodeRepulsion, componentSpacingMin, componentSpacingMax);
-
-function getLayoutOptions() {
-    const baseOptions = {
-        name: currentLayout,
-        nodeRepulsion: nodeRepulsionValue,
-        componentSpacing: componentSpacingValue,
-    };
-
-    if (currentLayout === "cose" && isGeneSymbolPage) {
-        return {
-            ...baseOptions,
-            idealEdgeLength: 100,
-            nodeOverlap: 20,
-            padding: 30,
-            animate: true,
-            animationDuration: 500,
-            gravity: -1.2,
-            numIter: 1500,
-            initialTemp: 200,
-            coolingFactor: 0.95,
-            minTemp: 1.0,
-            edgeElasticity: 100,
-        };
-    }
-
-    return baseOptions;
-}
+const layoutController = createLayoutController({
+    isGeneSymbolPage,
+    defaultNodeRepulsion,
+});
 
 const cy = cytoscape({
     container: document.querySelector(".cy"),
@@ -402,13 +178,16 @@ const cy = cytoscape({
             },
         },
     ],
-    layout: getLayoutOptions(),
+    layout: layoutController.getLayoutOptions(),
     userZoomingEnabled: true,
     zoomingEnabled: true,
     wheelSensitivity: 0.2,
 });
 
 window.cy = cy;
+layoutController.attachCy(cy);
+layoutController.registerInitialLayoutStop();
+setupInitialAutoArrange();
 
 const bodyContainer = document.querySelector(".body-container");
 const leftPanelToggleButton = document.getElementById("toggle-left-panel");
@@ -865,8 +644,10 @@ setupSidePanelToggles();
 // Network layout dropdown
 // --------------------------------------------------------
 document.getElementById("layout-dropdown").addEventListener("change", function () {
-    currentLayout = this.value;
-    cy.layout(getLayoutOptions()).run();
+    layoutController.setLayout(this.value);
+    layoutController.clearLayoutRefresh();
+    queueAutoArrange({ afterLayout: true, delayMs: AUTO_ARRANGE_DELAY_MS });
+    layoutController.runLayoutWithRepulsion();
 });
 
 // =============================================================================
@@ -995,7 +776,7 @@ if (isPhenotypePage) {
             }
         });
 
-        cy.layout(getLayoutOptions()).run();
+        layoutController.runLayoutWithRepulsion();
         checkEmptyState();
 
         if (window.refreshPhenotypeList) {
@@ -1080,7 +861,7 @@ if (isPhenotypePage) {
             }
         });
 
-        cy.layout(getLayoutOptions()).run();
+        layoutController.runLayoutWithRepulsion();
         checkEmptyState();
 
         if (window.refreshPhenotypeList) {
@@ -1142,7 +923,7 @@ if (isPhenotypePage) {
             }
         });
 
-        cy.layout(getLayoutOptions()).run();
+        layoutController.runLayoutWithRepulsion();
         checkEmptyState();
 
         if (window.refreshPhenotypeList) {
@@ -1161,6 +942,9 @@ if (edgeSlider && edgeSlider.noUiSlider) {
         document.getElementById("edge-size-value").textContent = formattedValues.join(" - ");
         filterByNodeColorAndEdgeSize();
     });
+    edgeSlider.noUiSlider.on("set", function () {
+        queueAutoArrange({ afterLayout: true, delayMs: AUTO_ARRANGE_DELAY_MS });
+    });
 }
 
 if (isPhenotypePage && nodeSlider && nodeSlider.noUiSlider) {
@@ -1172,16 +956,20 @@ if (isPhenotypePage && nodeSlider && nodeSlider.noUiSlider) {
         }
         filterByNodeColorAndEdgeSize();
     });
+    nodeSlider.noUiSlider.on("set", function () {
+        queueAutoArrange({ afterLayout: true, delayMs: AUTO_ARRANGE_DELAY_MS });
+    });
 }
 
 // =============================================================================
 // Genotype, sex, and life-stage specific filtering
 // =============================================================================
 
-let target_phenotype = isPhenotypePage ? pageConfig.displayName : "";
+let targetPhenotype = isPhenotypePage ? pageConfig.displayName : "";
 
 function applyFiltering() {
-    filterElementsByGenotypeAndSex(elements, cy, target_phenotype, filterByNodeColorAndEdgeSize);
+    queueAutoArrange({ afterLayout: true, delayMs: AUTO_ARRANGE_DELAY_MS });
+    filterElementsByGenotypeAndSex(elements, cy, targetPhenotype, filterByNodeColorAndEdgeSize);
     if (typeof window.recalculateCentrality === "function") {
         window.recalculateCentrality();
     }
@@ -1281,8 +1069,7 @@ const nodeRepulsionContainer = document.getElementById("node-repulsion-container
 const nodeRepulsionBox = document.getElementById("node-repulsion-box");
 
 function updateNodeRepulsionVisibility() {
-    const selectedLayout = layoutDropdown.value;
-    const displayValue = selectedLayout === "cose" ? "block" : "none";
+    const displayValue = "block";
 
     if (nodeRepulsionContainer) {
         nodeRepulsionContainer.style.display = displayValue;
@@ -1297,11 +1084,20 @@ updateNodeRepulsionVisibility();
 layoutDropdown.addEventListener("change", updateNodeRepulsionVisibility);
 
 createSlider("nodeRepulsion-slider", defaultNodeRepulsion, 1, 10, 1, (intValues) => {
-    nodeRepulsionValue = scaleToOriginalRange(intValues, nodeRepulsionMin, nodeRepulsionMax);
-    componentSpacingValue = scaleToOriginalRange(intValues, componentSpacingMin, componentSpacingMax);
     document.getElementById("node-repulsion-value").textContent = intValues;
-    cy.layout(getLayoutOptions()).run();
+    layoutController.updateRepulsionScale(intValues);
+    layoutController.scheduleNodeRepulsion();
+    if (layoutController.getLayout() !== "random") {
+        layoutController.queueLayoutRefresh(150);
+    }
 });
+const nodeRepulsionSlider = document.getElementById("nodeRepulsion-slider");
+if (nodeRepulsionSlider && nodeRepulsionSlider.noUiSlider) {
+    nodeRepulsionSlider.noUiSlider.on("set", () => {
+        const needsLayoutStop = layoutController.getLayout() !== "random";
+        queueAutoArrange({ afterLayout: needsLayoutStop, delayMs: AUTO_ARRANGE_DELAY_MS });
+    });
+}
 
 // ############################################################################
 // Initialize centrality system
@@ -1380,7 +1176,7 @@ cy.on("tap", "node, edge", function (event) {
 });
 
 cy.on("tap", "node, edge", function (event) {
-    showTooltip(event, cy, map_symbol_to_id, target_phenotype, nodeColorMin, nodeColorMax, edgeMin, edgeMax, nodeSizes);
+    showTooltip(event, cy, mapSymbolToId, targetPhenotype, { nodeColorValues });
 });
 
 cy.on("tap", function (event) {
@@ -1402,7 +1198,7 @@ cy.on("tap", function (event) {
 // Exporter
 // ############################################################################
 
-const file_name = `TSUMUGI_${pageConfig.name || "network"}`;
+const fileName = `TSUMUGI_${pageConfig.name || "network"}`;
 
 function attachExportHandler(elementId, handler) {
     const button = document.getElementById(elementId);
@@ -1410,17 +1206,17 @@ function attachExportHandler(elementId, handler) {
     button.addEventListener("click", handler);
 }
 
-attachExportHandler("export-png", () => exportGraphAsPNG(cy, file_name));
-attachExportHandler("export-jpg", () => exportGraphAsJPG(cy, file_name));
-attachExportHandler("export-svg", () => exportGraphAsSVG(cy, file_name));
-attachExportHandler("export-csv", () => exportGraphAsCSV(cy, file_name));
-attachExportHandler("export-graphml", () => exportGraphAsGraphML(cy, file_name));
+attachExportHandler("export-png", () => exportGraphAsPNG(cy, fileName));
+attachExportHandler("export-jpg", () => exportGraphAsJPG(cy, fileName));
+attachExportHandler("export-svg", () => exportGraphAsSVG(cy, fileName));
+attachExportHandler("export-csv", () => exportGraphAsCSV(cy, fileName));
+attachExportHandler("export-graphml", () => exportGraphAsGraphML(cy, fileName));
 
-attachExportHandler("export-png-mobile", () => exportGraphAsPNG(cy, file_name));
-attachExportHandler("export-jpg-mobile", () => exportGraphAsJPG(cy, file_name));
-attachExportHandler("export-svg-mobile", () => exportGraphAsSVG(cy, file_name));
-attachExportHandler("export-csv-mobile", () => exportGraphAsCSV(cy, file_name));
-attachExportHandler("export-graphml-mobile", () => exportGraphAsGraphML(cy, file_name));
+attachExportHandler("export-png-mobile", () => exportGraphAsPNG(cy, fileName));
+attachExportHandler("export-jpg-mobile", () => exportGraphAsJPG(cy, fileName));
+attachExportHandler("export-svg-mobile", () => exportGraphAsSVG(cy, fileName));
+attachExportHandler("export-csv-mobile", () => exportGraphAsCSV(cy, fileName));
+attachExportHandler("export-graphml-mobile", () => exportGraphAsGraphML(cy, fileName));
 
 // ############################################################################
 // UI Helpers
@@ -1453,6 +1249,68 @@ function autoArrangeModules() {
     cy.endBatch();
     fitVisibleComponents();
     scheduleSubnetworkFrameUpdate();
+}
+
+function setupInitialAutoArrange() {
+    let handled = false;
+    const triggerInitialArrange = (reason) => {
+        if (handled) return;
+        handled = true;
+        queueAutoArrange({ afterLayout: false, delayMs: AUTO_ARRANGE_DELAY_MS });
+    };
+
+    const timeoutId = setTimeout(() => {
+        triggerInitialArrange("timeout");
+    }, INITIAL_AUTO_ARRANGE_TIMEOUT_MS);
+
+    window.addEventListener(
+        REPULSION_FINISH_EVENT,
+        (event) => {
+            clearTimeout(timeoutId);
+            triggerInitialArrange("repulsion");
+        },
+        { once: true },
+    );
+}
+
+function queueAutoArrange({ afterLayout = false, delayMs = AUTO_ARRANGE_DELAY_MS } = {}) {
+    if (!cy) return;
+    let arranged = false;
+    const runAutoArrange = () => {
+        if (arranged) return;
+        arranged = true;
+        autoArrangeModules();
+    };
+    const scheduleRun = () => {
+        setTimeout(runAutoArrange, delayMs);
+    };
+    if (!afterLayout) {
+        scheduleRun();
+        return;
+    }
+    let repulsionFallbackId = null;
+    const onRepulsionFinish = (event) => {
+        if (repulsionFallbackId) {
+            clearTimeout(repulsionFallbackId);
+            repulsionFallbackId = null;
+        }
+        scheduleRun();
+    };
+    const scheduleAfterRepulsion = () => {
+        window.addEventListener(REPULSION_FINISH_EVENT, onRepulsionFinish, { once: true });
+        repulsionFallbackId = setTimeout(() => {
+            window.removeEventListener(REPULSION_FINISH_EVENT, onRepulsionFinish);
+            scheduleRun();
+        }, AUTO_ARRANGE_REPULSION_TIMEOUT_MS);
+    };
+    const layoutFallbackId = setTimeout(() => {
+        scheduleRun();
+    }, AUTO_ARRANGE_LAYOUT_TIMEOUT_MS);
+    cy.one("layoutstop", () => {
+        if (arranged) return;
+        clearTimeout(layoutFallbackId);
+        scheduleAfterRepulsion();
+    });
 }
 
 const arrangeModulesButton = document.getElementById("arrange-modules-button");
