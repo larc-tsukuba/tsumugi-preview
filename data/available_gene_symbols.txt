@@ -193,7 +193,6 @@ Ankrd11
 Ankrd13a
 Ankrd28
 Ankrd49
-Ankrd50
 Ankrd52
 Ankrd9
 Anks1
@@ -2989,7 +2988,6 @@ Sik1
 Sik3
 Sinhcaf
 Sipa1l1
-Sirt3
 Sirt4
 Six1
 Ska2
@@ -3586,7 +3584,6 @@ Ush1c
 Usp1
 Usp12
 Usp15
-Usp16
 Usp19
 Usp21
 Usp22
