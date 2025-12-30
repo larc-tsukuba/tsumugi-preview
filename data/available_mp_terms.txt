@@ -339,6 +339,7 @@ impaired glucose tolerance
 impaired pupillary reflex
 impaired righting response
 improved glucose tolerance
+increased aggression
 increased airway resistance
 increased alpha-beta T cell number
 increased anti-nuclear antigen antibody level
@@ -517,6 +518,7 @@ small ovary
 small seminal vesicle
 small spleen
 small stomach
+small superior vagus ganglion
 small testis
 small thymus
 small uterus
